@@ -1,38 +1,33 @@
-use mousefood::EmbeddedBackend;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 
+#[cfg(feature = "simulator")]
+use amaru_pi::backends::simulator;
+use amaru_pi::button::Button;
+use amaru_pi::screens::chart::ChartScreen;
+use amaru_pi::screens::logo::LogoScreen;
+use amaru_pi::screens::scan::ScanScreen;
+use amaru_pi::screens::Screen;
+use mousefood::EmbeddedBackend;
 use ratatui::crossterm::event::{self, Event};
-
 use ratatui::prelude::*;
-
-use crate::button::Button;
-use crate::screens::chart::ChartScreen;
-use crate::screens::logo::LogoScreen;
-//use crate::screens::scan::ScanScreen;
-use crate::screens::Screen;
-
-mod backends;
-mod button;
-mod screens;
 
 // Demos from https://github.com/j-g00da/mousefood-esp32-demo/
 // https://github.com/j-g00da/mousefood/tree/main/examples/simulator
 // https://github.com/orhun/embedded-ratatui-workshop/blob/main/apps/simulator/src/main.rs
 
-
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let splash_duration = Duration::from_millis(5000);
     let mut logo = LogoScreen::new(splash_duration);
-    let mut app = ChartScreen::new();
+    let mut app = ScanScreen::new();
 
     #[cfg(feature = "simulator")]
-    let backend = backends::simulator::create_backend();
+    let backend = simulator::create_backend();
 
 /// BEGIN COPY
-// /*
+ /*
     impl embedded_hal::digital::OutputPin for NoCs {
         fn set_low(&mut self) -> Result<(), Self::Error> {
             Ok(())
@@ -58,8 +53,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     use rppal::gpio::Gpio;
     use rppal::hal::Delay;
     use rppal::spi::{Bus, Mode, SlaveSelect, Spi};
-
-    use crate::button::Button;
 
     pub struct NoCs;
 
@@ -141,7 +134,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         ..Default::default()
     };
     let backend = EmbeddedBackend::new(Box::leak(Box::new(display)), backend_config);
-// */
+ */
 /// END COPY
 
 
@@ -163,9 +156,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             println!("Button B pressed");
         }*/
 
+        // TODO figure out a better way to handle flow between screens
         terminal.draw(|frame| {
             if show_first {
-                println!("zefr");
                 logo.display(elapsed, frame);
             } else {
                 app.display(elapsed, frame);

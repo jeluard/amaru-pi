@@ -28,6 +28,12 @@ cross build --target=aarch64-unknown-linux-musl --release
 
 Regular `amaru` commands can be used to run on an RPI. Note that it's probably a good idea to start with a fresh amaru db. Running `bootstrap` (to start from a `cardano-node` snapshot) will either be pretty slow or crash (on Pi zero).
 
+```shell
+export AMARU_PEER_ADDRESS=192.168.1.61:3001
+export AMARU_NETWORK=mainnet
+./amaru daemon
+```
+
 ## Tweaks
 
 Some RPIs require specific configuration to be able to run `amaru`.

@@ -1,4 +1,5 @@
 run-simulator:
+# If on OSX, do `export LIBRARY_PATH="$LIBRARY_PATH:$(brew --prefix)/lib"`
 	cargo run --no-default-features --features simulator
 
 build-rpi:

@@ -18,11 +18,13 @@
 
 use std::time::Duration;
 
+use qrcode::QrCode;
 use ratatui::Frame;
 use ratatui::buffer::Buffer;
 use ratatui::layout::{Constraint, Layout, Rect};
 use ratatui::text::Text;
 use ratatui::widgets::Widget;
+use tui_qrcode::{Colors, QrCodeWidget};
 
 #[derive(Debug, Default)]
 pub struct ScanScreen {
@@ -30,7 +32,9 @@ pub struct ScanScreen {
 
 impl crate::screens::Screen for ScanScreen {
     fn display(&mut self, _duration: Duration, frame: &mut Frame) {
-        frame.render_widget(self, frame.area());
+        let qr_code = QrCode::new("https://ratatui.rs").expect("failed to create QR code");
+        let widget = QrCodeWidget::new(qr_code).colors(Colors::Inverted);
+        frame.render_widget(widget, frame.area());
     }
 }
 
@@ -38,31 +42,5 @@ impl ScanScreen {
     pub fn new() -> Self {
         Self {
         }
-    }
-}
-
-/// Implement the Widget trait for &mut App so that it can be rendered
-///
-/// This is implemented on a mutable reference so that the app can update its state while it is
-/// being rendered. This allows the fps widget to update the fps calculation and the colors widget
-/// to update the colors to render.
-impl Widget for &mut ScanScreen {
-    fn render(self, area: Rect, buf: &mut Buffer) {
-        use Constraint::{Length, Min};
-        let [top] = area.layout(&Layout::vertical([Length(1), Min(0)]));
-        let [title] = top.layout(&Layout::horizontal([Min(0), Length(8)]));
-       /*
-       let widget = BigText::builder()
-                .pixel_size(PixelSize::Full)
-                .style(Style::new())
-                .lines(vec!["AMARU".green().into()])
-                .build();
-            let qr_code = QrCode::new("https://ratatui.rs").expect("failed to create QR code");
-            let widget = QrCodeWidget::new(qr_code).colors(Colors::Inverted);
-            frame.render_widget(widget, area);
-        */
-        Text::from("colors_rgb example. Press q to quit")
-            .centered()
-            .render(title, buf);
     }
 }
