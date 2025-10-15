@@ -1,13 +1,13 @@
-use std::time::Duration;
-
+use crate::screens::Screen;
 use ratatui::{
+    Frame,
     buffer::Buffer,
     layout::{Constraint, Direction, Layout, Rect},
     text::Text,
     widgets::Widget,
-    Frame,
 };
-use tachyonfx::{fx, EffectManager, EffectTimer, Interpolation};
+use std::time::Duration;
+use tachyonfx::{EffectManager, EffectTimer, Interpolation, fx};
 
 pub struct LogoScreen {
     pub effects: EffectManager<()>,
@@ -35,15 +35,20 @@ impl LogoScreen {
 
     fn on_tick(&mut self, elapsed: Duration, frame: &mut Frame) {
         let area = frame.area();
-        self.effects.process_effects(elapsed.into(), frame.buffer_mut(), area);
+        self.effects
+            .process_effects(elapsed.into(), frame.buffer_mut(), area);
     }
 
     fn trigger_explosion(&mut self) {
         if let Some(area) = self.logo_area {
             // Create an explode effect over that area
-            let effect = fx::explode(15.0, 2.0, EffectTimer::new(self.splash_duration.into(), Interpolation::Linear))  // duration in ms
-                .with_pattern(tachyonfx::pattern::RadialPattern::center())
-                .with_filter(tachyonfx::CellFilter::Area(area));
+            let effect = fx::explode(
+                15.0,
+                2.0,
+                EffectTimer::new(self.splash_duration.into(), Interpolation::Linear),
+            ) // duration in ms
+            .with_pattern(tachyonfx::pattern::RadialPattern::center())
+            .with_filter(tachyonfx::CellFilter::Area(area));
             // optional: chain with fade-out etc
             self.effects.add_effect(effect);
             self.triggered = true;
@@ -56,11 +61,12 @@ impl Widget for &mut LogoScreen {
         // Draw the static logo
         Text::raw(LOGO).render(area, buf);
         // Let effects modify the buffer
-        self.effects.process_effects(tachyonfx::Duration::from_millis(0), buf, area);
+        self.effects
+            .process_effects(tachyonfx::Duration::from_millis(0), buf, area);
     }
 }
 
-impl crate::screens::Screen for LogoScreen {
+impl Screen for LogoScreen {
     fn display(&mut self, elapsed: Duration, frame: &mut Frame) {
         self.on_tick(elapsed, frame);
 

@@ -16,8 +16,6 @@
 //!
 //! [`latest`]: https://github.com/ratatui/ratatui/tree/latest
 
-use std::time::{Duration, Instant};
-
 use crossterm::event;
 use palette::convert::FromColorUnclamped;
 use palette::{Okhsv, Srgb};
@@ -27,6 +25,7 @@ use ratatui::layout::{Constraint, Layout, Position, Rect};
 use ratatui::style::Color;
 use ratatui::text::Text;
 use ratatui::widgets::Widget;
+use std::time::{Duration, Instant};
 
 #[derive(Debug, Default)]
 pub struct ColorScreen {

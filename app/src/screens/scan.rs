@@ -16,31 +16,18 @@
 //!
 //! [`latest`]: https://github.com/ratatui/ratatui/tree/latest
 
-use std::time::Duration;
-
 use qrcode::QrCode;
 use ratatui::Frame;
-use ratatui::buffer::Buffer;
-use ratatui::layout::{Constraint, Layout, Rect};
-use ratatui::text::Text;
-use ratatui::widgets::Widget;
+use std::time::Duration;
 use tui_qrcode::{Colors, QrCodeWidget};
 
 #[derive(Debug, Default)]
-pub struct ScanScreen {
-}
+pub struct ScanScreen {}
 
 impl crate::screens::Screen for ScanScreen {
     fn display(&mut self, _duration: Duration, frame: &mut Frame) {
         let qr_code = QrCode::new("https://ratatui.rs").expect("failed to create QR code");
         let widget = QrCodeWidget::new(qr_code).colors(Colors::Inverted);
         frame.render_widget(widget, frame.area());
-    }
-}
-
-impl ScanScreen {
-    pub fn new() -> Self {
-        Self {
-        }
     }
 }

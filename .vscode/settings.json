@@ -1,5 +1,12 @@
 {
     "rust-analyzer.linkedProjects": [
         "app/Cargo.toml"
-    ]
+    ],
+    "rust-analyzer.check.overrideCommand": [
+        "cross",
+        "check",
+        "--target",
+        "aarch64-unknown-linux-gnu"
+    ],
+    "rust-analyzer.cargo.target": "aarch64-unknown-linux-gnu"
 }
