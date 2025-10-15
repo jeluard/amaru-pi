@@ -44,7 +44,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let mut terminal = Terminal::new(backend).unwrap();
 
-    let mut button_a = Button::default();
+    let button_a = Button::default();
     let mut button_b = Button::default();
     let mut button_x = Button::default();
     let mut button_y = Button::default();
