@@ -53,6 +53,7 @@ dependencies = [
  "qrcode",
  "ratatui",
  "rppal",
+ "signal-hook",
  "tachyonfx",
  "tokio",
  "tui-qrcode",

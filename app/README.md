@@ -12,16 +12,16 @@ make run-simulator
 
 You can also take a screenshot using the simalator by setting `EG_SIMULATOR_DUMP=screenshot.png`.
 
-To build and deploy on a rpi:
+To build and deploy on a pi:
 
 ```shell
 export SCP_TARGET=pi@rpi5.local:.
-make upload-rpi
+make upload-pi
 ```
 
 Then ssh to the machine and execute `./app`.
 
-# RPI optimizations
+# PI optimizations
 
 In `/boot/firmware/config.txt`
 
