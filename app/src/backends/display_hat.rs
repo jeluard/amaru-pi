@@ -1,15 +1,13 @@
-use embedded_hal_bus::spi::ExclusiveDevice;
+use embedded_hal_bus::spi::{ExclusiveDevice, NoDelay};
 use mipidsi::interface::SpiInterface;
 use mipidsi::models::ST7789;
 use mipidsi::options::{ColorInversion, Orientation, Rotation};
-use mipidsi::{Builder, Display};
+use mipidsi::{Builder, Display, NoResetPin};
 use mousefood::prelude::Rgb565;
 use mousefood::{EmbeddedBackend, EmbeddedBackendConfig};
-use rppal::gpio::Gpio;
+use rppal::gpio::{Gpio, InputPin, OutputPin};
 use rppal::hal::Delay;
 use rppal::spi::{Bus, Mode, SlaveSelect, Spi};
-
-use crate::button::Button;
 
 pub struct NoCs;
 
@@ -41,22 +39,19 @@ impl embedded_hal::digital::ErrorType for NoCs {
     type Error = core::convert::Infallible;
 }
 
-pub fn create_backend() -> EmbeddedBackend<
-    'static,
-    Display<
-        SpiInterface<
-            'static,
-            ExclusiveDevice<Spi, NoCs, embedded_hal_bus::spi::NoDelay>,
-            rppal::gpio::OutputPin,
-        >,
-        ST7789,
-        mipidsi::NoResetPin,
-    >,
-    Rgb565,
-> {
-    let mut button_aa = Button::new();
-    let mut button_bb = Button::new();
+type EbSpi = SpiInterface<'static, ExclusiveDevice<Spi, NoCs, NoDelay>, OutputPin>;
 
+pub struct GpioPins {
+    pub button_a: InputPin,
+    pub button_b: InputPin,
+    pub button_x: InputPin,
+    pub button_y: InputPin,
+}
+
+pub fn create_backend() -> (
+    EmbeddedBackend<'static, Display<EbSpi, ST7789, NoResetPin>, Rgb565>,
+    GpioPins,
+) {
     let gpio = Gpio::new().unwrap();
     let dc = gpio.get(SPI_DC).unwrap().into_output();
     let mut backlight = gpio.get(BACKLIGHT).unwrap().into_output();
@@ -64,8 +59,8 @@ pub fn create_backend() -> EmbeddedBackend<
 
     let button_a = gpio.get(BUTTON_A).unwrap().into_input_pullup();
     let button_b = gpio.get(BUTTON_B).unwrap().into_input_pullup();
-    let _button_x = gpio.get(BUTTON_X).unwrap().into_input_pullup();
-    let _button_y = gpio.get(BUTTON_Y).unwrap().into_input_pullup();
+    let button_x = gpio.get(BUTTON_X).unwrap().into_input_pullup();
+    let button_y = gpio.get(BUTTON_Y).unwrap().into_input_pullup();
 
     let mut led_r = gpio.get(LED_R).unwrap().into_output();
     let mut led_g = gpio.get(LED_G).unwrap().into_output();
@@ -84,15 +79,7 @@ pub fn create_backend() -> EmbeddedBackend<
     let di = SpiInterface::new(spi_device, dc, Box::leak(buffer));
     let mut delay = Delay::new();
 
-    let mut display: Display<
-        SpiInterface<
-            '_,
-            ExclusiveDevice<Spi, NoCs, embedded_hal_bus::spi::NoDelay>,
-            rppal::gpio::OutputPin,
-        >,
-        ST7789,
-        mipidsi::NoResetPin,
-    > = Builder::new(ST7789, di)
+    let display: Display<EbSpi, ST7789, NoResetPin> = Builder::new(ST7789, di)
         .display_size(W as u16, H as u16)
         .orientation(Orientation {
             rotation: Rotation::Deg270,
@@ -104,18 +91,17 @@ pub fn create_backend() -> EmbeddedBackend<
 
     let backend_config = EmbeddedBackendConfig {
         // Define how to display newly rendered widgets to the simulator window
-        flush_callback: Box::new(
-            move |_display: &mut Display<
-                SpiInterface<
-                    '_,
-                    ExclusiveDevice<Spi, NoCs, embedded_hal_bus::spi::NoDelay>,
-                    rppal::gpio::OutputPin,
-                >,
-                ST7789,
-                mipidsi::NoResetPin,
-            >| {},
-        ),
+        flush_callback: Box::new(move |_display: &mut Display<EbSpi, ST7789, NoResetPin>| {}),
         ..Default::default()
     };
-    EmbeddedBackend::new(Box::leak(Box::new(display)), backend_config)
+
+    let backend = EmbeddedBackend::new(Box::leak(Box::new(display)), backend_config);
+    let pins = GpioPins {
+        button_a,
+        button_b,
+        button_x,
+        button_y,
+    };
+
+    (backend, pins)
 }

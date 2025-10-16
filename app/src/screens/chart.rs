@@ -1,6 +1,3 @@
-use std::time::Duration;
-
-use ratatui::Frame;
 /// A Ratatui example that demonstrates how to handle charts.
 ///
 /// This example demonstrates how to draw various types of charts such as line, bar, and
@@ -11,11 +8,13 @@ use ratatui::Frame;
 /// release.
 ///
 /// [`latest`]: https://github.com/ratatui/ratatui/tree/latest
+use ratatui::Frame;
 use ratatui::layout::{Constraint, Layout, Rect};
 use ratatui::style::{Color, Modifier, Style, Stylize};
 use ratatui::symbols::{self, Marker};
 use ratatui::text::{Line, Span};
 use ratatui::widgets::{Axis, Block, Chart, Dataset, GraphType, LegendPosition};
+use std::time::Duration;
 
 pub struct ChartScreen {
     signal1: SinSignal,
@@ -23,6 +22,22 @@ pub struct ChartScreen {
     signal2: SinSignal,
     data2: Vec<(f64, f64)>,
     window: [f64; 2],
+}
+
+impl Default for ChartScreen {
+    fn default() -> Self {
+        let mut signal1 = SinSignal::new(0.2, 3.0, 18.0);
+        let mut signal2 = SinSignal::new(0.1, 2.0, 10.0);
+        let data1 = signal1.by_ref().take(200).collect::<Vec<(f64, f64)>>();
+        let data2 = signal2.by_ref().take(200).collect::<Vec<(f64, f64)>>();
+        Self {
+            signal1,
+            data1,
+            signal2,
+            data2,
+            window: [0.0, 20.0],
+        }
+    }
 }
 
 #[derive(Clone)]
@@ -54,20 +69,6 @@ impl Iterator for SinSignal {
 }
 
 impl ChartScreen {
-    pub fn new() -> Self {
-        let mut signal1 = SinSignal::new(0.2, 3.0, 18.0);
-        let mut signal2 = SinSignal::new(0.1, 2.0, 10.0);
-        let data1 = signal1.by_ref().take(200).collect::<Vec<(f64, f64)>>();
-        let data2 = signal2.by_ref().take(200).collect::<Vec<(f64, f64)>>();
-        Self {
-            signal1,
-            data1,
-            signal2,
-            data2,
-            window: [0.0, 20.0],
-        }
-    }
-
     fn on_tick(&mut self, _duration: Duration, _frame: &mut Frame) {
         self.data1.drain(0..5);
         self.data1.extend(self.signal1.by_ref().take(5));

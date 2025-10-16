@@ -11,3 +11,6 @@ upload-pi: build-pi
 		exit 1; \
 	fi
 	scp target/aarch64-unknown-linux-musl/release/amaru-pi ${SCP_TARGET}
+
+build-pi-gnu:
+	cross build --release --target aarch64-unknown-linux-gnu
