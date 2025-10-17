@@ -40,7 +40,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let (backend, pins) = backends::display_hat::create_backend();
 
     #[cfg(feature = "simulator")]
-    let mut backend = simulator::create_backend();
+    let mut backend = backends::simulator::create_backend();
 
     let mut terminal = Terminal::new(backend).unwrap();
 
