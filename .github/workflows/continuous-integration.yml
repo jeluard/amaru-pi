@@ -17,6 +17,10 @@ env:
     ~/.cargo/git/db/
     target/
 
+defaults:
+  run:
+    working-directory: ./app
+
 jobs:
   build:
     name: Build ${{ matrix.environments.title }}
