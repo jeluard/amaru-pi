@@ -1,0 +1,90 @@
+name: Continuous Integration
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ["main"]
+  pull_request:
+    types: [opened, synchronize, reopened, converted_to_draft, ready_for_review]
+    branches: ["*"]
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_CACHE_PATH: |
+    ~/.cargo/bin/
+    ~/.cargo/registry/index/
+    ~/.cargo/registry/cache/
+    ~/.cargo/git/db/
+    target/
+
+jobs:
+  build:
+    name: Build ${{ matrix.environments.title }}
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        environments:
+          - runner: ubuntu-latest
+            target: aarch64-unknown-linux-gnu
+            title: aarch64/linux
+
+          - runner: ubuntu-latest
+            target: aarch64-unknown-linux-musl
+            title: aarch64/linux-musl
+            setup: rustup target add aarch64-unknown-linux-musl
+
+          - runner: macos-latest
+            target: aarch64-apple-darwin
+            title: aarch64/macos
+            cross-compile: true
+
+    runs-on: ${{ matrix.environments.runner }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+      - id: timestamp
+        shell: bash
+        run: |
+          echo "value=$(/bin/date -u '+%Y%m%d-%H%M%S')" >> $GITHUB_OUTPUT
+      # Cache dependencies when pushing (i.e. merging into allowed branch).
+      - uses: actions/cache@v4
+        if: github.event_name == 'push'
+        with:
+          path: ${{ env.RUST_CACHE_PATH }}
+          key: cargo-${{ matrix.environments.target }}-${{ steps.timestamp.outputs.value }}
+          restore-keys: |
+            cargo-${{ matrix.environments.target }}
+      # Only restore cache for other types of events (e.g. Pull requests).
+      - uses: actions/cache/restore@v4
+        if: github.event_name != 'push'
+        with:
+          path: ${{ env.RUST_CACHE_PATH }}
+          key: cargo-${{ matrix.environments.target }}
+          restore-keys: |
+            cargo-${{ matrix.environments.target }}
+      - name: Run build
+        shell: bash
+        run: |
+          set -e
+          EXTRA_ARGS="${{ matrix.environments.extra-args || '' }}"
+          SCOPE="${{ matrix.environments.packages || '' }}"
+          COMMAND="build --release"
+          if [[ -n "${{ matrix.environments.setup }}" ]]; then
+            echo "Running setup command: ${{ matrix.environments.setup }}"
+            ${{ matrix.environments.setup }}
+          fi
+          if [[ "${{ matrix.environments.cross-compile }}" == "true" ]] ; then
+            cargo install --force cross --git https://github.com/cross-rs/cross
+            # cross doesn't load .cargo/config.toml, see https://github.com/cross-rs/cross/issues/562
+            $HOME/.cargo/bin/cross $COMMAND --locked --all-features $SCOPE --target ${{ matrix.environments.target }}
+          else
+            if [[ "${{ matrix.environments.target }}" == "x86_64-unknown-linux-gnu" ]] ; then
+              cargo $EXTRA_ARGS $COMMAND $SCOPE --locked
+            else
+              cargo $EXTRA_ARGS $COMMAND $SCOPE --locked --target ${{ matrix.environments.target }}
+            fi
+            # Run doc tests separately as --doc can't be used with --all-targets
+            cargo test --doc
+          fi
