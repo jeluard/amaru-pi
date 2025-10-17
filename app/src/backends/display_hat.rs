@@ -66,15 +66,9 @@ pub fn create_backend() -> (
     let mut led_g = gpio.get(LED_G).unwrap().into_output();
     let mut led_b = gpio.get(LED_B).unwrap().into_output();
 
-    let spi = Spi::new(Bus::Spi0, SlaveSelect::Ss1, 15_000_000_u32, Mode::Mode0).unwrap();
+    let spi = Spi::new(Bus::Spi0, SlaveSelect::Ss1, 60_000_000_u32, Mode::Mode0).unwrap();
     let spi_device = ExclusiveDevice::new_no_delay(spi, NoCs).unwrap();
     let buffer = Box::new([0_u8; 512]);
-
-    println!("Display initialized");
-
-    led_r.set_high();
-    led_g.set_high();
-    led_b.set_high();
 
     let di = SpiInterface::new(spi_device, dc, Box::leak(buffer));
     let mut delay = Delay::new();

@@ -1,11 +1,11 @@
 /// A Ratatui example that demonstrates how to handle charts.
 ///
-/// This example demonstrates how to draw various types of charts such as line, bar, and
-/// scatter charts.
+/// This example demonstrates how to draw various types of charts such as line,
+/// bar, and scatter charts.
 ///
-/// This example runs with the Ratatui library code in the branch that you are currently
-/// reading. See the [`latest`] branch for the code which works with the most recent Ratatui
-/// release.
+/// This example runs with the Ratatui library code in the branch that you are
+/// currently reading. See the [`latest`] branch for the code which works with
+/// the most recent Ratatui release.
 ///
 /// [`latest`]: https://github.com/ratatui/ratatui/tree/latest
 use ratatui::Frame;
