@@ -29,7 +29,7 @@ enum CurrentScreen {
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let splash_duration = Duration::from_millis(5000);
+    let splash_duration = Duration::from_millis(3000);
     let mut logo = LogoScreen::new(splash_duration);
     let mut scan_screen = ScanScreen::default();
     let mut chart_screen = ChartScreen::default();
@@ -44,7 +44,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let mut terminal = Terminal::new(backend).unwrap();
 
-    let button_a = Button::default();
+    let mut button_a = Button::default();
     let mut button_b = Button::default();
     let mut button_x = Button::default();
     let mut button_y = Button::default();
