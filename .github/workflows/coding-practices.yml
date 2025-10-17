@@ -35,10 +35,6 @@ jobs:
             dependencies:
               - "Cargo.toml"
               - "Cargo.lock"
-              - "crates/**/Cargo.toml"
-              - "crates/**/Cargo.lock"
-              - "examples/**/Cargo.toml"
-              - "examples/**/Cargo.lock"
 
   unused-dependencies:
     needs: changes
@@ -63,10 +59,10 @@ jobs:
           key: cargo-x86_64-unknown-linux-gnu
           restore-keys: |
             cargo-x86_64-unknown-linux-gnu
-      - run: cargo clippy-amaru
+      - run: cargo clippy --no-default-features --features simulator
 
   formatting:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: cargo fmt-amaru
+      - run: cargo fmt
