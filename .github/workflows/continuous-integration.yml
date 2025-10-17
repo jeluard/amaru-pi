@@ -32,22 +32,23 @@ jobs:
           - runner: ubuntu-latest
             target: aarch64-unknown-linux-gnu
             title: ubuntu/aarch64-gnu
-            setup: rustup target add aarch64-unknown-linux-gnu
+            setup: sudo apt-get install musl-tools gcc-aarch64-linux-gnu && rustup target add aarch64-unknown-linux-gnu
 
           - runner: ubuntu-latest
             target: aarch64-unknown-linux-musl
             title: ubuntu/aarch64-musl
-            setup: rustup target add aarch64-unknown-linux-musl
+            setup: sudo apt-get install musl-tools gcc-aarch64-linux-gnu && rustup target add aarch64-unknown-linux-musl
 
-          - runner: macos-latest
-            target: aarch64-unknown-linux-musl
-            title: macos/aarch64-musl
-            cross-compile: true
+          # No docker on macOS runners
+          #- runner: macos-latest
+          #  target: aarch64-unknown-linux-musl
+          #  title: macos/aarch64-musl
+          #  cross-compile: true
 
-          - runner: macos-latest
-            target: aarch64-unknown-linux-gnu
-            title: macos/aarch64-gnu
-            cross-compile: true
+          #- runner: macos-latest
+          #  target: aarch64-unknown-linux-gnu
+          #  title: macos/aarch64-gnu
+          #  cross-compile: true
 
     runs-on: ${{ matrix.environments.runner }}
     steps:
