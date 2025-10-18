@@ -24,6 +24,12 @@ Note that cross-building is probably better on a linux environment.
 cross build --target=aarch64-unknown-linux-musl --release
 ```
 
+If you're cross-compiling from macOS, add the following environment variable (see this [cross issue](https://github.com/cross-rs/cross/issues/1492)):
+
+```shell
+CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_LINKER=x86_64-linux-gnu-gcc cross build --target=aarch64-unknown-linux-musl --release
+```
+
 # Running
 
 Regular `amaru` commands can be used to run on an RPI. Note that it's probably a good idea to start with a fresh amaru db. Running `bootstrap` (to start from a `cardano-node` snapshot) will either be pretty slow or crash (on Pi zero).
