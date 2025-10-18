@@ -1,3 +1,5 @@
 **/target/**
 .vscode
+.build
+overlays/home/pi/bin
 app/app

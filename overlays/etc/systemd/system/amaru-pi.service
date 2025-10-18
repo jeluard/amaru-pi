@@ -1,0 +1,17 @@
+[Unit]
+Description=Apmaru PI
+After=network.target local-fs.target
+
+[Service]
+Type=simple
+EnvironmentFile=amaru.env
+ExecStart=amaru-pi
+WorkingDirectory=/home/pi/
+Restart=always
+RestartSec=2
+User=pi
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
