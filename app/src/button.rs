@@ -1,22 +1,14 @@
+use amaru_doctor::model::button::ButtonPress;
 use std::time::{Duration, Instant};
 
 const DEBOUNCE: Duration = Duration::from_millis(50);
 const LONG_PRESS: Duration = Duration::from_millis(1000);
 const DOUBLE_PRESS: Duration = Duration::from_millis(400);
-
-#[derive(Debug)]
-pub enum ButtonPressEvent {
-    Short,
-    Long,
-    Double,
-}
-
 pub struct Button {
     pressed: bool,
     last_change: Instant,
     press_start: Option<Instant>,
     long_triggered: bool,
-
     last_release: Option<Instant>,
     pending_short: bool,
 }
@@ -36,13 +28,14 @@ impl Default for Button {
 
 impl Button {
     /// Call this every loop with current pin state
-    pub fn update(&mut self, is_low: bool) -> Option<ButtonPressEvent> {
+    pub fn update(&mut self, is_low: bool) -> Option<ButtonPress> {
         let now = Instant::now();
 
         // Debounce
         if now.duration_since(self.last_change) < DEBOUNCE {
             return None;
         }
+        let mut event = None;
 
         // Pressed
         if is_low && !self.pressed {
@@ -50,12 +43,10 @@ impl Button {
             self.last_change = now;
             self.press_start = Some(now);
             self.long_triggered = false;
-        }
-        // Released
-        else if !is_low && self.pressed {
+        } else if !is_low && self.pressed {
+            // Released
             self.pressed = false;
             self.last_change = now;
-
             if let Some(start) = self.press_start
                 && !self.long_triggered
                 && now.duration_since(start) >= DEBOUNCE
@@ -67,13 +58,13 @@ impl Button {
                     // It's a double press
                     self.pending_short = false;
                     self.last_release = None;
-                    return Some(ButtonPressEvent::Double);
+                    event = Some(ButtonPress::Double);
                 }
-                // Maybe a single press, but wait for double window
-                self.pending_short = true;
-                self.last_release = Some(now);
+                if event.is_none() {
+                    self.pending_short = true;
+                    self.last_release = Some(now);
+                }
             }
-
             self.press_start = None;
         }
 
@@ -85,18 +76,16 @@ impl Button {
         {
             self.long_triggered = true;
             self.pending_short = false; // cancel short
-            return Some(ButtonPressEvent::Long);
+            event = Some(ButtonPress::Long);
         }
-
         // Resolve pending short if timeout expired
         if self.pending_short
             && let Some(last) = self.last_release
             && now.duration_since(last) > DOUBLE_PRESS
         {
             self.pending_short = false;
-            return Some(ButtonPressEvent::Short);
+            event = Some(ButtonPress::Short);
         }
-
-        None
+        event
     }
 }
