@@ -1,0 +1,1 @@
+if [ "$(/usr/bin/tty)" = "/dev/tty1" ]; then exec {{PI_DEST_PATH}}/{{STARTUP_SCRIPT_NAME}}; fi
