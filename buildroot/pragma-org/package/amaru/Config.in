@@ -1,0 +1,5 @@
+config BR2_PACKAGE_AMARU
+    bool "amaru"
+    help
+      Amaru is a Cardano node client written in Rust. It is an ambitious project which aims to bring more diversity to the infrastructure operating the Cardano network.
+
