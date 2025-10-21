@@ -19,7 +19,6 @@
 //!
 //! [`latest`]: https://github.com/ratatui/ratatui/tree/latest
 
-use crossterm::event;
 use palette::convert::FromColorUnclamped;
 use palette::{Okhsv, Srgb};
 use ratatui::Frame;
@@ -32,25 +31,12 @@ use std::time::{Duration, Instant};
 
 #[derive(Debug, Default)]
 pub struct ColorScreen {
-    /// The current state of the app (running or quit)
-    state: AppState,
-
     /// A widget that displays the current frames per second
     fps_widget: FpsWidget,
 
     /// A widget that displays the full range of RGB colors that can be
     /// displayed in the terminal.
     colors_widget: ColorsWidget,
-}
-
-#[derive(Debug, Default, PartialEq, Eq)]
-enum AppState {
-    /// The app is running
-    #[default]
-    Running,
-
-    /// The user has requested the app to quit
-    Quit,
 }
 
 /// A widget that displays the current frames per second
@@ -90,31 +76,9 @@ impl crate::screens::Screen for ColorScreen {
     }
 }
 
-impl ColorScreen {
-    pub const fn is_running(&self) -> bool {
-        matches!(self.state, AppState::Running)
-    }
-
-    /// Handle any events that have occurred since the last time the app was
-    /// rendered.
-    fn handle_events(&mut self) -> Result<(), Box<dyn std::error::Error>> {
-        // Ensure that the app only blocks for a period that allows the app to render at
-        // approximately 60 FPS (this doesn't account for the time to render the frame,
-        // and will also update the app immediately any time an event occurs)
-        let timeout = Duration::from_secs_f32(1.0 / 60.0);
-        if !event::poll(timeout)? {
-            return Ok(());
-        }
-        if event::read()?.is_key_press() {
-            self.state = AppState::Quit;
-        }
-        Ok(())
-    }
-}
-
 /// Implement the Widget trait for &mut App so that it can be rendered
 ///
-/// This is implemented on a mutable reference so that the app can update its
+/// This is implemented son a mutable reference so that the app can update its
 /// state while it is being rendered. This allows the fps widget to update the
 /// fps calculation and the colors widget to update the colors to render.
 impl Widget for &mut ColorScreen {
