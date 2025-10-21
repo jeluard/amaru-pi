@@ -23,7 +23,7 @@
 	// Use 'postCreateCommand' to run commands after the container is created.
 	// "postCreateCommand": "rustc --version",
 	"onCreateCommand": {
-		"installDependencies": "sudo apt update && sudo apt -y upgrade && sudo apt install -y clang libdbus-1-dev pkg-config heaptrack heaptrack-gui"
+		"installDependencies": "sudo apt update && sudo apt -y upgrade && sudo apt install -y clang pkg-config heaptrack heaptrack-gui"
 	},
 
 	// Configure tool-specific properties.
