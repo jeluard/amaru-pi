@@ -12,9 +12,7 @@ make run-simulator
 
 You can also take a screenshot using the simalator by setting `EG_SIMULATOR_DUMP=screenshot.png`.
 
-To build and deploy on a pi, first install `cargo install --locked cargo-zigbuild`:
-
-then:
+To build and deploy on a pi:
 
 ```shell
 export SCP_TARGET=pi@pi.local:.

@@ -31,7 +31,7 @@ signal-hook = "0.3.18"
 anyhow = "1.0.100"
 
 [features]
-default = ["display_hat"]
+default = ["simulator"]
 simulator = ["embedded-graphics-simulator"]
 #display_hat = ["mipidsi", "spidev", "linux-embedded-hal", "embedded-hal-bus", "embedded-hal"]
 display_hat = ["mipidsi", "rppal", "embedded-hal-bus", "embedded-hal"]
