@@ -8,7 +8,6 @@ pub fn create_backend() -> EmbeddedBackend<'static, SimulatorDisplay<Rgb565>, Rg
         "Simulator",
         &OutputSettings {
             scale: 2,
-            max_fps: 60,
             ..Default::default()
         },
     );
