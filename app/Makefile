@@ -3,7 +3,8 @@ run-simulator:
 	cargo run --no-default-features --features simulator
 
 build-pi:
-	cross build --release --target aarch64-unknown-linux-musl
+	rustup target add aarch64-unknown-linux-musl
+	cargo zigbuild --release --target aarch64-unknown-linux-musl
 
 upload-pi: build-pi
 	@if [ -z "$${SCP_TARGET}" ]; then \
@@ -11,6 +12,3 @@ upload-pi: build-pi
 		exit 1; \
 	fi
 	scp target/aarch64-unknown-linux-musl/release/amaru-pi ${SCP_TARGET}
-
-build-pi-gnu:
-	cross build --release --target aarch64-unknown-linux-gnu

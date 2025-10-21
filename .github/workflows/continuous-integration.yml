@@ -32,23 +32,22 @@ jobs:
           - runner: ubuntu-latest
             target: aarch64-unknown-linux-gnu
             title: ubuntu/aarch64-gnu
-            setup: sudo apt-get install musl-tools gcc-aarch64-linux-gnu && rustup target add aarch64-unknown-linux-gnu
+            setup: sudo apt-get install musl-tools gcc-aarch64-linux-gnu && snap install zig --classic --beta
 
           - runner: ubuntu-latest
             target: aarch64-unknown-linux-musl
             title: ubuntu/aarch64-musl
-            setup: sudo apt-get install musl-tools gcc-aarch64-linux-gnu && rustup target add aarch64-unknown-linux-musl
+            setup: sudo apt-get install musl-tools gcc-aarch64-linux-gnu && snap install zig --classic --beta
 
-          # No docker on macOS runners
-          #- runner: macos-latest
-          #  target: aarch64-unknown-linux-musl
-          #  title: macos/aarch64-musl
-          #  cross-compile: true
+          - runner: macos-latest
+            target: aarch64-unknown-linux-musl
+            title: macos/aarch64-musl
+            setup: brew install zig
 
-          #- runner: macos-latest
-          #  target: aarch64-unknown-linux-gnu
-          #  title: macos/aarch64-gnu
-          #  cross-compile: true
+          - runner: macos-latest
+            target: aarch64-unknown-linux-gnu
+            title: macos/aarch64-gnu
+            setup: brew install zig
 
     runs-on: ${{ matrix.environments.runner }}
     steps:
@@ -79,23 +78,12 @@ jobs:
         shell: bash
         run: |
           set -e
-          EXTRA_ARGS="${{ matrix.environments.extra-args || '' }}"
-          SCOPE="${{ matrix.environments.packages || '' }}"
-          COMMAND="build --release"
+
           if [[ -n "${{ matrix.environments.setup }}" ]]; then
             echo "Running setup command: ${{ matrix.environments.setup }}"
             ${{ matrix.environments.setup }}
           fi
-          if [[ "${{ matrix.environments.cross-compile }}" == "true" ]] ; then
-            cargo install --force cross --git https://github.com/cross-rs/cross
-            # cross doesn't load .cargo/config.toml, see https://github.com/cross-rs/cross/issues/562
-            $HOME/.cargo/bin/cross $COMMAND --locked --all-features $SCOPE --target ${{ matrix.environments.target }}
-          else
-            if [[ "${{ matrix.environments.target }}" == "x86_64-unknown-linux-gnu" ]] ; then
-              cargo $EXTRA_ARGS $COMMAND $SCOPE --locked
-            else
-              cargo $EXTRA_ARGS $COMMAND $SCOPE --locked --target ${{ matrix.environments.target }}
-            fi
-            # Run doc tests separately as --doc can't be used with --all-targets
-            cargo test --doc
-          fi
+
+          cargo install --locked cargo-zigbuild
+          rustup target add ${{ matrix.environments.target }}
+          cargo zigbuild --locked --target ${{ matrix.environments.target }}

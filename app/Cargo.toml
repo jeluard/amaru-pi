@@ -2,12 +2,11 @@
 name = "amaru-pi"
 edition = "2024"
 publish = false
-default-run = "demo"
+default-run = "amaru-pi"
 
 [dependencies]
 amaru-kernel = { git = "https://github.com/pragma-org/amaru" }
-#amaru-doctor = { git = "https://github.com/jeluard/amaru-doctor" }
-amaru-doctor = { path = "../../amaru-doctor" }
+amaru-doctor = { git = "https://github.com/jeluard/amaru-doctor" }
 tui-qrcode = { git = "https://github.com/jeluard/tui-widgets", branch = "jeluard/upgrade-ratatui"}
 mousefood = { git = "https://github.com/j-g00da/mousefood", features = ["framebuffer"] }
 ratatui = "0.30.0-alpha.5"
