@@ -1,0 +1,215 @@
+From 14cdec79f523ed62db807450dc5c3857726e09d4 Mon Sep 17 00:00:00 2001
+From: pgrange <pascal@grange.nom.fr>
+Date: Tue, 21 Oct 2025 16:00:41 +0000
+Subject: [PATCH] feat: wifi portal to setup network configuration
+
+---
+ board/raspberrypi/overlay/etc/dnsmasq.conf    |  2 +
+ .../overlay/etc/hostapd/hostapd.conf          |  6 +++
+ board/raspberrypi/overlay/etc/httpd.conf      |  1 +
+ .../overlay/etc/init.d/S99wifi-fallback       |  9 +++++
+ .../overlay/www/cgi-bin/wifi_connect.cgi      | 24 +++++++++++
+ .../overlay/www/cgi-bin/wifi_scan.cgi         | 11 +++++
+ board/raspberrypi/overlay/www/index.html      | 40 +++++++++++++++++++
+ configs/raspberrypi5_defconfig                |  3 ++
+ package/busybox/busybox.config                | 14 +++----
+ 9 files changed, 103 insertions(+), 7 deletions(-)
+ create mode 100644 board/raspberrypi/overlay/etc/dnsmasq.conf
+ create mode 100644 board/raspberrypi/overlay/etc/hostapd/hostapd.conf
+ create mode 100644 board/raspberrypi/overlay/etc/httpd.conf
+ create mode 100755 board/raspberrypi/overlay/etc/init.d/S99wifi-fallback
+ create mode 100755 board/raspberrypi/overlay/www/cgi-bin/wifi_connect.cgi
+ create mode 100755 board/raspberrypi/overlay/www/cgi-bin/wifi_scan.cgi
+ create mode 100644 board/raspberrypi/overlay/www/index.html
+
+diff --git a/board/raspberrypi/overlay/etc/dnsmasq.conf b/board/raspberrypi/overlay/etc/dnsmasq.conf
+new file mode 100644
+index 0000000000..e1c4247d9e
+--- /dev/null
++++ b/board/raspberrypi/overlay/etc/dnsmasq.conf
+@@ -0,0 +1,2 @@
++interface=wlan0
++dhcp-range=192.168.50.2,192.168.50.20,255.255.255.0,24h
+diff --git a/board/raspberrypi/overlay/etc/hostapd/hostapd.conf b/board/raspberrypi/overlay/etc/hostapd/hostapd.conf
+new file mode 100644
+index 0000000000..462ef74aed
+--- /dev/null
++++ b/board/raspberrypi/overlay/etc/hostapd/hostapd.conf
+@@ -0,0 +1,6 @@
++interface=wlan0
++driver=nl80211
++ssid=amaruconfig
++hw_mode=g
++channel=6
++auth_algs=1
+diff --git a/board/raspberrypi/overlay/etc/httpd.conf b/board/raspberrypi/overlay/etc/httpd.conf
+new file mode 100644
+index 0000000000..4b2e0e54ee
+--- /dev/null
++++ b/board/raspberrypi/overlay/etc/httpd.conf
+@@ -0,0 +1 @@
++H:/www
+diff --git a/board/raspberrypi/overlay/etc/init.d/S99wifi-fallback b/board/raspberrypi/overlay/etc/init.d/S99wifi-fallback
+new file mode 100755
+index 0000000000..60b8fcc4be
+--- /dev/null
++++ b/board/raspberrypi/overlay/etc/init.d/S99wifi-fallback
+@@ -0,0 +1,9 @@
++#!/bin/sh
++# Start Wi-Fi fallback if no network detected
++if ! ping -c 1 8.8.8.8 >/dev/null 2>&1; then
++    echo "No network, starting fallback AP"
++    ip link set wlan0 up
++    hostapd -B /etc/hostapd/hostapd.conf
++    dnsmasq -C /etc/dnsmasq.conf
++    httpd -f -p 80 -h /www
++fi
+diff --git a/board/raspberrypi/overlay/www/cgi-bin/wifi_connect.cgi b/board/raspberrypi/overlay/www/cgi-bin/wifi_connect.cgi
+new file mode 100755
+index 0000000000..331560367b
+--- /dev/null
++++ b/board/raspberrypi/overlay/www/cgi-bin/wifi_connect.cgi
+@@ -0,0 +1,24 @@
++#!/bin/sh
++read POST_DATA
++
++SSID=$(echo "$POST_DATA" | sed -n 's/.*ssid=\([^&]*\).*/\1/p' | sed 's/%20/ /g')
++PASS=$(echo "$POST_DATA" | sed -n 's/.*password=\([^&]*\).*/\1/p' | sed 's/%20/ /g')
++
++CONF=/etc/wpa_supplicant.conf
++
++cat > "$CONF" <<EOF
++ctrl_interface=/var/run/wpa_supplicant
++network={
++    ssid="$SSID"
++    psk="$PASS"
++}
++EOF
++
++killall wpa_supplicant 2>/dev/null
++wpa_supplicant -B -i wlan0 -c "$CONF"
++udhcpc -i wlan0 -q -n &
++
++echo "Content-Type: text/html"
++echo ""
++echo "<html><body><h2>Connecting to $SSID...</h2><p>Check your connection.</p></body></html>"
++
+diff --git a/board/raspberrypi/overlay/www/cgi-bin/wifi_scan.cgi b/board/raspberrypi/overlay/www/cgi-bin/wifi_scan.cgi
+new file mode 100755
+index 0000000000..b18111615a
+--- /dev/null
++++ b/board/raspberrypi/overlay/www/cgi-bin/wifi_scan.cgi
+@@ -0,0 +1,11 @@
++#!/bin/sh
++echo "Content-Type: application/json"
++echo ""
++
++# Scan et extrais les SSID uniques
++iwlist wlan0 scan 2>/dev/null | \
++  grep 'ESSID:' | \
++  sed 's/.*ESSID:"\(.*\)"/\1/' | \
++  sort -u | \
++  awk 'BEGIN{print "["} {printf "%s\"%s\"", sep, $0; sep=","} END{print "]"}'
++
+diff --git a/board/raspberrypi/overlay/www/index.html b/board/raspberrypi/overlay/www/index.html
+new file mode 100644
+index 0000000000..b1fc08d89f
+--- /dev/null
++++ b/board/raspberrypi/overlay/www/index.html
+@@ -0,0 +1,40 @@
++<!DOCTYPE html>
++<html>
++<head>
++  <meta charset="utf-8">
++  <title>Wi-Fi Configuration</title>
++  <style>
++    body { font-family: sans-serif; margin: 2em; background: #fafafa; }
++    h1 { color: #333; }
++    select, input { margin: .5em 0; padding: .4em; font-size: 1em; }
++    button { padding: .5em 1em; font-size: 1em; }
++  </style>
++</head>
++<body>
++  <h1>Configure Wi-Fi</h1>
++  <form id="wifiForm" method="POST" action="/cgi-bin/wifi_connect.cgi">
++    <label for="ssid">Select Network:</label><br>
++    <select name="ssid" id="ssid"></select><br>
++
++    <label for="password">Password:</label><br>
++    <input type="password" name="password" id="password"><br>
++
++    <button type="submit">Connect</button>
++  </form>
++
++  <script>
++    fetch("/cgi-bin/wifi_scan.cgi")
++      .then(r => r.json())
++      .then(networks => {
++        const sel = document.getElementById("ssid");
++        networks.forEach(ssid => {
++          const opt = document.createElement("option");
++          opt.value = ssid;
++          opt.textContent = ssid;
++          sel.appendChild(opt);
++        });
++      });
++  </script>
++</body>
++</html>
++
+diff --git a/configs/raspberrypi5_defconfig b/configs/raspberrypi5_defconfig
+index fef7ddafbc..7462e4ee35 100644
+--- a/configs/raspberrypi5_defconfig
++++ b/configs/raspberrypi5_defconfig
+@@ -29,9 +29,12 @@ BR2_PACKAGE_RPI_FIRMWARE_CMDLINE_FILE="board/raspberrypi5/cmdline_5.txt"
+ BR2_PACKAGE_CRDA=y
+ BR2_PACKAGE_DHCPCD=y
+ # BR2_PACKAGE_DHCPCD_ENABLE_PRIVSEP is not set
++BR2_PACKAGE_DNSMASQ=y
++# BR2_PACKAGE_DNSMASQ_TFTP is not set
+ BR2_PACKAGE_DROPBEAR=y
+ # BR2_PACKAGE_DROPBEAR_CLIENT is not set
+ # BR2_PACKAGE_DROPBEAR_SMALL is not set
++BR2_PACKAGE_HOSTAPD=y
+ BR2_PACKAGE_WIRELESS_TOOLS=y
+ BR2_PACKAGE_WPA_SUPPLICANT=y
+ BR2_PACKAGE_KMOD=y
+diff --git a/package/busybox/busybox.config b/package/busybox/busybox.config
+index 1522de7a2a..8e70a61db4 100644
+--- a/package/busybox/busybox.config
++++ b/package/busybox/busybox.config
+@@ -1,7 +1,7 @@
+ #
+ # Automatically generated make config: don't edit
+ # Busybox version: 1.37.0
+-# Tue Oct 21 12:11:23 2025
++# Tue Oct 21 15:33:21 2025
+ #
+ CONFIG_HAVE_DOT_CONFIG=y
+ 
+@@ -887,16 +887,16 @@ CONFIG_ETHER_WAKE=y
+ # CONFIG_FEATURE_FTPGETPUT_LONG_OPTIONS is not set
+ CONFIG_HOSTNAME=y
+ CONFIG_DNSDOMAINNAME=y
+-# CONFIG_HTTPD is not set
+-CONFIG_FEATURE_HTTPD_PORT_DEFAULT=0
++CONFIG_HTTPD=y
++CONFIG_FEATURE_HTTPD_PORT_DEFAULT=80
+ # CONFIG_FEATURE_HTTPD_RANGES is not set
+ # CONFIG_FEATURE_HTTPD_SETUID is not set
+ # CONFIG_FEATURE_HTTPD_BASIC_AUTH is not set
+ # CONFIG_FEATURE_HTTPD_AUTH_MD5 is not set
+-# CONFIG_FEATURE_HTTPD_CGI is not set
+-# CONFIG_FEATURE_HTTPD_CONFIG_WITH_SCRIPT_INTERPR is not set
+-# CONFIG_FEATURE_HTTPD_SET_REMOTE_PORT_TO_ENV is not set
+-# CONFIG_FEATURE_HTTPD_ENCODE_URL_STR is not set
++CONFIG_FEATURE_HTTPD_CGI=y
++CONFIG_FEATURE_HTTPD_CONFIG_WITH_SCRIPT_INTERPR=y
++CONFIG_FEATURE_HTTPD_SET_REMOTE_PORT_TO_ENV=y
++CONFIG_FEATURE_HTTPD_ENCODE_URL_STR=y
+ # CONFIG_FEATURE_HTTPD_ERROR_PAGES is not set
+ # CONFIG_FEATURE_HTTPD_PROXY is not set
+ # CONFIG_FEATURE_HTTPD_GZIP is not set
+-- 
+2.39.5
+
