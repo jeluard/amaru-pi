@@ -2,6 +2,7 @@
 name = "amaru-pi"
 edition = "2024"
 publish = false
+default-run = "demo"
 
 [dependencies]
 amaru-kernel = { git = "https://github.com/pragma-org/amaru" }
