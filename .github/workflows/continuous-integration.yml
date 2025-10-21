@@ -30,23 +30,10 @@ jobs:
       matrix:
         environments:
           - runner: ubuntu-latest
-            target: aarch64-unknown-linux-gnu
             title: ubuntu/aarch64-gnu
-            setup: sudo apt-get install musl-tools gcc-aarch64-linux-gnu && snap install zig --classic --beta
-
-          - runner: ubuntu-latest
-            target: aarch64-unknown-linux-musl
-            title: ubuntu/aarch64-musl
-            setup: sudo apt-get install musl-tools gcc-aarch64-linux-gnu && snap install zig --classic --beta
-
-          - runner: macos-latest
-            target: aarch64-unknown-linux-musl
-            title: macos/aarch64-musl
-            setup: brew install zig
 
           - runner: macos-latest
             target: aarch64-unknown-linux-gnu
-            title: macos/aarch64-gnu
             setup: brew install zig
 
     runs-on: ${{ matrix.environments.runner }}
@@ -85,5 +72,4 @@ jobs:
           fi
 
           cargo install --locked cargo-zigbuild
-          rustup target add ${{ matrix.environments.target }}
-          cargo zigbuild --locked --target ${{ matrix.environments.target }}
+          make build

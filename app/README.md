@@ -18,7 +18,7 @@ then:
 
 ```shell
 export SCP_TARGET=pi@pi.local:.
-make upload-pi
+make upload
 ```
 
 Then ssh to the machine and execute `./app`.

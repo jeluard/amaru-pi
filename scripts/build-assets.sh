@@ -78,5 +78,5 @@ cp release/amaru-doctor ${BIN_DIR}
 cd ${BUILD_DIR}
 sync_repo https://github.com/jeluard/amaru-pi $BUILD_DIR/amaru-pi
 cd release/amaru-pi
-cross build --target aarch64-unknown-linux-musl --release
+make build
 cp release/amaru-pi ${BIN_DIR}

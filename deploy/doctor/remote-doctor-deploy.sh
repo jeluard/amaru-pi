@@ -38,7 +38,7 @@ fi
 
 JUMP_HOST=${JUMP_HOST:-localhost}
 JUMP_USER=${JUMP_USER:-${USER}}
-BUILD_TARGET=${BUILD_TARGET:-aarch64-unknown-linux-musl}
+BUILD_TARGET=${BUILD_TARGET:-aarch64-unknown-linux-gnu}
 
 BINARY_NAME="doctor"
 PI_DEST_PATH="/home/${PI_USER}/amaru-pi"

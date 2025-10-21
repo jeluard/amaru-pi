@@ -36,10 +36,4 @@ simulator = ["embedded-graphics-simulator"]
 #display_hat = ["mipidsi", "spidev", "linux-embedded-hal", "embedded-hal-bus", "embedded-hal"]
 display_hat = ["mipidsi", "rppal", "embedded-hal-bus", "embedded-hal"]
 
-[workspace.metadata.cross.target.aarch64-unknown-linux-musl]
-pre-build = [
-  "apt update",
-  "apt install -y libclang-dev"
-]
-[workspace.metadata.cross.target.aarch64-unknown-linux-musl.env]
-passthrough = ["LIBCLANG_PATH=/usr/lib/llvm-10/lib"]
+[workspace]
