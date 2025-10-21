@@ -1,0 +1,142 @@
+From b6d45f0835100c12d7c3a3ca591eab5243d41046 Mon Sep 17 00:00:00 2001
+From: pgrange <pascal@grange.nom.fr>
+Date: Tue, 21 Oct 2025 13:13:40 +0000
+Subject: [PATCH] feat: basic raspberrypi5 setup
+
+Support for integrated wifi device and dhcp.
+---
+ .../overlay/etc/modules-load.d/wlan.conf      |  2 ++
+ configs/raspberrypi5_defconfig                | 19 ++++++++++++++++---
+ package/busybox/busybox.config                | 12 ++++++++----
+ 3 files changed, 26 insertions(+), 7 deletions(-)
+ create mode 100644 board/raspberrypi/overlay/etc/modules-load.d/wlan.conf
+
+diff --git a/board/raspberrypi/overlay/etc/modules-load.d/wlan.conf b/board/raspberrypi/overlay/etc/modules-load.d/wlan.conf
+new file mode 100644
+index 0000000000..68aef924ef
+--- /dev/null
++++ b/board/raspberrypi/overlay/etc/modules-load.d/wlan.conf
+@@ -0,0 +1,2 @@
++brcmfmac
++cfg80211
+diff --git a/configs/raspberrypi5_defconfig b/configs/raspberrypi5_defconfig
+index 6928e2ba0f..fef7ddafbc 100644
+--- a/configs/raspberrypi5_defconfig
++++ b/configs/raspberrypi5_defconfig
+@@ -1,11 +1,12 @@
+ BR2_aarch64=y
+ BR2_cortex_a76=y
+-BR2_TOOLCHAIN_EXTERNAL=y
+-BR2_TOOLCHAIN_EXTERNAL_BOOTLIN=y
+-BR2_TOOLCHAIN_EXTERNAL_BOOTLIN_AARCH64_GLIBC_STABLE=y
++BR2_TOOLCHAIN_BUILDROOT_UCLIBC=y
++BR2_PACKAGE_HOST_LINUX_HEADERS_CUSTOM_6_12=y
+ BR2_GLOBAL_PATCH_DIR="board/raspberrypi/patches"
+ BR2_DOWNLOAD_FORCE_CHECK_HASHES=y
++BR2_TARGET_GENERIC_ROOT_PASSWD="root"
+ BR2_SYSTEM_DHCP="eth0"
++BR2_ROOTFS_OVERLAY="board/raspberrypi5/overlay"
+ BR2_ROOTFS_POST_BUILD_SCRIPT="board/raspberrypi5/post-build.sh"
+ BR2_ROOTFS_POST_IMAGE_SCRIPT="board/raspberrypi5/post-image.sh"
+ BR2_LINUX_KERNEL=y
+@@ -18,10 +19,21 @@ BR2_LINUX_KERNEL_INTREE_DTS_NAME="broadcom/bcm2712-rpi-5-b broadcom/bcm2712d0-rp
+ BR2_LINUX_KERNEL_NEEDS_HOST_OPENSSL=y
+ BR2_PACKAGE_BUSYBOX_SHOW_OTHERS=y
+ BR2_PACKAGE_XZ=y
++BR2_PACKAGE_BRCMFMAC_SDIO_FIRMWARE_RPI=y
++BR2_PACKAGE_BRCMFMAC_SDIO_FIRMWARE_RPI_BT=y
++BR2_PACKAGE_BRCMFMAC_SDIO_FIRMWARE_RPI_WIFI=y
+ BR2_PACKAGE_RPI_FIRMWARE=y
+ BR2_PACKAGE_RPI_FIRMWARE_CONFIG_FILE="board/raspberrypi5/config_5.txt"
+ BR2_PACKAGE_RPI_FIRMWARE_CMDLINE_FILE="board/raspberrypi5/cmdline_5.txt"
+ # BR2_PACKAGE_RPI_FIRMWARE_INSTALL_DTB_OVERLAYS is not set
++BR2_PACKAGE_CRDA=y
++BR2_PACKAGE_DHCPCD=y
++# BR2_PACKAGE_DHCPCD_ENABLE_PRIVSEP is not set
++BR2_PACKAGE_DROPBEAR=y
++# BR2_PACKAGE_DROPBEAR_CLIENT is not set
++# BR2_PACKAGE_DROPBEAR_SMALL is not set
++BR2_PACKAGE_WIRELESS_TOOLS=y
++BR2_PACKAGE_WPA_SUPPLICANT=y
+ BR2_PACKAGE_KMOD=y
+ BR2_PACKAGE_KMOD_TOOLS=y
+ BR2_TARGET_ROOTFS_EXT2=y
+@@ -32,3 +44,4 @@ BR2_PACKAGE_HOST_DOSFSTOOLS=y
+ BR2_PACKAGE_HOST_GENIMAGE=y
+ BR2_PACKAGE_HOST_KMOD_XZ=y
+ BR2_PACKAGE_HOST_MTOOLS=y
++BR2_PACKAGE_AMARU=y
+diff --git a/package/busybox/busybox.config b/package/busybox/busybox.config
+index 823fcd2b46..1522de7a2a 100644
+--- a/package/busybox/busybox.config
++++ b/package/busybox/busybox.config
+@@ -1,7 +1,7 @@
+ #
+ # Automatically generated make config: don't edit
+-# Busybox version: 1.36.1
+-# Wed May  8 17:25:31 2024
++# Busybox version: 1.37.0
++# Tue Oct 21 12:11:23 2025
+ #
+ CONFIG_HAVE_DOT_CONFIG=y
+ 
+@@ -17,6 +17,7 @@ CONFIG_SHOW_USAGE=y
+ CONFIG_FEATURE_VERBOSE_USAGE=y
+ # CONFIG_FEATURE_COMPRESS_USAGE is not set
+ CONFIG_LFS=y
++CONFIG_TIME64=y
+ # CONFIG_PAM is not set
+ CONFIG_FEATURE_DEVPTS=y
+ CONFIG_FEATURE_UTMP=y
+@@ -469,6 +470,7 @@ CONFIG_FEATURE_FIND_NEWER=y
+ CONFIG_FEATURE_FIND_SAMEFILE=y
+ CONFIG_FEATURE_FIND_EXEC=y
+ CONFIG_FEATURE_FIND_EXEC_PLUS=y
++CONFIG_FEATURE_FIND_EXEC_OK=y
+ CONFIG_FEATURE_FIND_USER=y
+ CONFIG_FEATURE_FIND_GROUP=y
+ CONFIG_FEATURE_FIND_NOT=y
+@@ -795,6 +797,7 @@ CONFIG_DEVMEM=y
+ # CONFIG_FLASH_LOCK is not set
+ # CONFIG_FLASH_UNLOCK is not set
+ # CONFIG_FLASHCP is not set
++CONFIG_GETFATTR=y
+ CONFIG_HDPARM=y
+ CONFIG_FEATURE_HDPARM_GET_IDENTITY=y
+ # CONFIG_FEATURE_HDPARM_HDIO_SCAN_HWIF is not set
+@@ -933,6 +936,7 @@ CONFIG_IPRULE=y
+ CONFIG_IPNEIGH=y
+ CONFIG_FEATURE_IP_ADDRESS=y
+ CONFIG_FEATURE_IP_LINK=y
++CONFIG_FEATURE_IP_LINK_CAN=y
+ CONFIG_FEATURE_IP_ROUTE=y
+ CONFIG_FEATURE_IP_ROUTE_DIR="/etc/iproute2"
+ CONFIG_FEATURE_IP_TUNNEL=y
+@@ -1007,6 +1011,7 @@ CONFIG_FEATURE_WGET_TIMEOUT=y
+ # CONFIG_WHOIS is not set
+ # CONFIG_ZCIP is not set
+ # CONFIG_UDHCPD is not set
++# CONFIG_FEATURE_UDHCPD_BOOTP is not set
+ # CONFIG_FEATURE_UDHCPD_BASE_IP_ON_MAC is not set
+ # CONFIG_FEATURE_UDHCPD_WRITE_LEASES_EARLY is not set
+ CONFIG_DHCPD_LEASES_FILE=""
+@@ -1016,7 +1021,7 @@ CONFIG_UDHCPC=y
+ CONFIG_FEATURE_UDHCPC_ARPING=y
+ CONFIG_FEATURE_UDHCPC_SANITIZEOPT=y
+ CONFIG_UDHCPC_DEFAULT_SCRIPT="/usr/share/udhcpc/default.script"
+-CONFIG_UDHCPC6_DEFAULT_SCRIPT="/usr/share/udhcpc/default.script"
++CONFIG_UDHCPC6_DEFAULT_SCRIPT=""
+ # CONFIG_UDHCPC6 is not set
+ # CONFIG_FEATURE_UDHCPC6_RFC3646 is not set
+ # CONFIG_FEATURE_UDHCPC6_RFC4704 is not set
+@@ -1151,7 +1156,6 @@ CONFIG_ASH_IDLE_TIMEOUT=y
+ CONFIG_ASH_ECHO=y
+ CONFIG_ASH_PRINTF=y
+ CONFIG_ASH_TEST=y
+-CONFIG_ASH_SLEEP=y
+ CONFIG_ASH_HELP=y
+ CONFIG_ASH_GETOPTS=y
+ CONFIG_ASH_CMDCMD=y
+-- 
+2.39.5
+

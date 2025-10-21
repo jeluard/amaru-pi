@@ -73,3 +73,11 @@ qemu-system-aarch64 \
 ```
 
 You can login as root without password.
+
+## Build an image for raspberry pi demo of amaru
+
+Apply the following git patches to buildroot:
+
+```bash
+git am 0001-amaru-fix-site-method-for-reproducibility.patch
+```
