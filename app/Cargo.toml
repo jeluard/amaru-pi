@@ -22,6 +22,8 @@ tachyonfx = { git = "https://github.com/junkdog/tachyonfx", branch = "ratatui-0.
 qrcode = "0.14.1"
 indoc = "2.0.6"
 signal-hook = "0.3.18"
+#linux-embedded-hal = {version = "0.4.0", features = ["spi"], optional = true }
+#spidev = {version = "0.7.0", optional = true }
 #bluer = { version = "0.17.4", features = ["bluetoothd"] }
 #bluer = { version = "0.17.4" }
 #zbus = "5.11.0"
@@ -31,6 +33,7 @@ anyhow = "1.0.100"
 [features]
 default = ["display_hat"]
 simulator = ["embedded-graphics-simulator"]
+#display_hat = ["mipidsi", "spidev", "linux-embedded-hal", "embedded-hal-bus", "embedded-hal"]
 display_hat = ["mipidsi", "rppal", "embedded-hal-bus", "embedded-hal"]
 
 [workspace.metadata.cross.target.aarch64-unknown-linux-musl]
