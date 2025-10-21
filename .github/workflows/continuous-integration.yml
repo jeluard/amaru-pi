@@ -35,7 +35,7 @@ jobs:
 
           - runner: macos-latest
             title: MacOS/aarch64-gnu
-            setup: brew install zig && cargo install --locked cargo-zigbuild
+            setup: pip install cargo-zigbuild
 
     runs-on: ${{ matrix.environments.runner }}
     steps:
