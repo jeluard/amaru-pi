@@ -1,4 +1,3 @@
-#[cfg(feature = "display_hat")]
 use amaru_pi::backends;
 use amaru_pi::screens::Screen;
 use amaru_pi::screens::chart::ChartScreen;
