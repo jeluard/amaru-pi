@@ -26,11 +26,7 @@
   <header>
     <h2>Amaru PI</h2>
     <nav aria-label="Main navigation">
-        <ul>
-        <li><a onclick="loadPage(this, 'getting-started.html')">Getting started</a></li>
-        <li><a onclick="loadPage(this, 'build.html')">Build</a></li>
-        <li><a onclick="loadPage(this, 'app.html')" aria-disabled="true">App</a></li>
-        </ul>
+        <ul />
     </nav>
   </header>
 
@@ -39,26 +35,79 @@
   </main>
 
   <script>
-    function loadPage(link, file) {
-      if (link.getAttribute('aria-disabled') === 'true') {
+    function loadPage(link, page) {
+      // Do nothing if link is already active
+      if (link && link.classList.contains('active')) {
         return;
       }
 
       const iframe = document.getElementById('content-frame');
-      iframe.src = file;
+      const url = `${page}?_=${Date.now()}`; // Cache buster, make sure page is always loaded fresh
+      iframe.src = url;
 
-      // Update active link
+      // Clear active state from all links
       document.querySelectorAll('nav a').forEach(a => a.classList.remove('active'));
-      link.classList.add('active');
+      // Update active link
+      link && link.classList.add('active');
     }
 
-    window.onload = function() {
-      // Load the first page by default
-      const firstLink = document.querySelector('nav a:not([aria-disabled="true"])');
-      if (firstLink) {
-        loadPage(firstLink, 'getting-started.html');
-      }
+    function loadPageFromLocationHashOrDefault() {
+        // Read page=XXX from location.hash
+        const hashValues = location.hash.slice(1).split('&').map(pair => pair.split('='));
+        const hashPage = hashValues.find(([key, _]) => key === 'page')?.[1];
+        if (hashPage) {
+            const page = Object.values(pages).find(p => p.page === `${hashPage}.html`);
+            const link = [...document.querySelectorAll('nav a')].find(a => a.dataset.page === `${hashPage}.html`);
+            if (link && !page.disabled) {
+                loadPage(link, link.dataset.page);
+            } else {
+                loadPage(null, 'error.html');
+            }
+        } else {
+            const firstLink = document.querySelector('nav a:not([aria-disabled="true"])');
+            if (firstLink) {
+                loadPage(firstLink, firstLink.dataset.page);
+            } else {
+                loadPage(null, 'error.html');
+            }
+        }
+    }
+
+    const pages = {
+      'Getting started': {page: 'getting-started.html'},
+      'Build': {page: 'build.html'},
+      'App': {page: 'app.html'},
+      'Claim': {page: 'claim.html', disabled: true},
     };
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const navList = document.querySelector('header nav ul');
+        navList.innerHTML = '';
+
+        Object.entries(pages).forEach(([title, value]) => {
+            const li = document.createElement('li');
+            const a = document.createElement('a');
+
+            a.textContent = title;
+            a.href = '#';
+            a.dataset.page = value.page;
+            a.ariaDisabled = value.disabled ? 'true' : 'false';
+            a.onclick = (e) => {
+                e.preventDefault();
+                if (!value.disabled) {
+                  history.pushState(null, '', `#page=${value.page.replace('.html', '')}`);
+                  loadPage(a, value.page);
+                }
+            };
+
+            li.appendChild(a);
+            navList.appendChild(li);
+        });
+
+        loadPageFromLocationHashOrDefault();
+    });
+
+    window.addEventListener('hashchange', loadPageFromLocationHashOrDefault);
   </script>
 
 </body>
