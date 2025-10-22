@@ -11,7 +11,7 @@ SCRIPT_DIR="$(cd "${0%/*}" && pwd)"
 
 source ~/.virtualenvs/pimoroni/bin/activate
 
-"$SCRIPT_DIR/inky/display_logo.py"
+"$SCRIPT_DIR/display_logo.py"
 
 AMARU_TRACE="amaru=trace" amaru --with-json-traces daemon \
            --peer-address="${PEER_ADDRESS}" \
@@ -24,19 +24,19 @@ AMARU_TRACE="amaru=trace" amaru --with-json-traces daemon \
   if [ "$EVENT" = "new.known_snapshots" ]; then
     # Epochs restored, used as initial Epoch
     EPOCH=$(jq -r '.fields.snapshots | split("..")[1][:-1]' <<< "$line" 2>/dev/null)
-    "$SCRIPT_DIR/inky/display_syncing.py" "$EPOCH"
+    "$SCRIPT_DIR/display_syncing.py" "$EPOCH"
   fi
   if [ "$EVENT" = "exit" ] && [ "$SPAN" = "end_epoch" ]; then
     # Epoch transition
     EPOCH=$(jq -r '.spans[0].into' <<< "$line" 2>/dev/null)
     if [[ "$AMARU_SYNCING" == "true" ]]; then
-        "$SCRIPT_DIR/inky/display_syncing.py" "$EPOCH"
+        "$SCRIPT_DIR/display_syncing.py" "$EPOCH"
     fi
   fi
   if [ "$AMARU_SYNCING" = "false" ] && [ "$EVENT" = "tip_changed" ]; then
     # New block
     BLOCK=$(jq -r '.fields.tip | split(".")[0]' <<< "$line" 2>/dev/null)
-    "$SCRIPT_DIR/inky/display_badge.py" "$EPOCH" "$BLOCK"
+    "$SCRIPT_DIR/display_badge.py" "$EPOCH" "$BLOCK"
   fi
   if [ "$AMARU_SYNCING" = "true" ] && [ "$EVENT" = "chain.extended" ]; then
     # Synced
