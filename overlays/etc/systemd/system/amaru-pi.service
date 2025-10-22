@@ -1,5 +1,5 @@
 [Unit]
-Description=Apmaru PI
+Description=Amaru PI
 After=network.target local-fs.target
 
 [Service]

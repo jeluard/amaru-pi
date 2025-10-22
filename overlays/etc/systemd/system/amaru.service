@@ -1,5 +1,5 @@
 [Unit]
-Description=Apmaru
+Description=Amaru
 After=network.target local-fs.target
 
 [Service]

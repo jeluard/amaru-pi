@@ -1,5 +1,5 @@
 [Unit]
-Description=Apmaru Doctor
+Description=Amaru Doctor
 After=network.target local-fs.target
 
 [Service]
