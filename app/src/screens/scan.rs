@@ -48,7 +48,7 @@ impl crate::screens::Screen for ScanScreen {
             .flex(Flex::Center)
             .areas(top_area);
 
-        let qr_code = QrCode::new("https://amaru.dev/pi").expect("failed to create QR code");
+        let qr_code = QrCode::new("https://jeluard.github.io/amaru-pi/?page=app").expect("failed to create QR code");
         let widget = QrCodeWidget::new(qr_code).colors(Colors::Inverted);
         frame.render_widget(widget, top_area);
 
