@@ -68,7 +68,7 @@ fi
 echo "→ Uploading overlays/ → ${REMOTE}:/ ..."
 (
   cd "${OVERLAYS_DIR}"
-  tar -cpf - . | ssh $SSH_OPTS "$REMOTE" 'sudo tar -C / -xpf -'
+  tar -cf - . | ssh $SSH_OPTS "$REMOTE" 'sudo tar --no-same-owner -C /  -xpf - ; sudo chown -R $(id -u):$(id -g) $HOME'
 )
 echo "✓ Upload complete."
 
