@@ -1,0 +1,15 @@
+[Unit]
+Description=Splash screen on the HAS display
+DefaultDependencies=no
+After=local-fs.target
+
+[Service]
+Type=oneshot
+User=root
+ExecStart=/usr/local/bin/hat_splash.py
+RemainAfterExit=yes
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
