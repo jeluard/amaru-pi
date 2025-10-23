@@ -34,17 +34,17 @@ sync_repo() {
 
   if [[ -d "$target_dir/.git" ]]; then
     echo "🔄 Updating repo in $target_dir..."
-    git -C "$target_dir" fetch --all --prune
+    git -C "$target_dir" fetch --all --prune --quiet
     if [[ -n "$branch" ]]; then
-      git -C "$target_dir" checkout "$branch" || git -C "$target_dir" checkout -b "$branch" "origin/$branch"
+      git -C "$target_dir" checkout "$branch" --quiet || git -C "$target_dir" checkout -b "$branch" "origin/$branch" --quiet
     fi
     git -C "$target_dir" pull --rebase --quiet
   else
     echo "📥 Cloning $repo_url into $target_dir..."
     if [[ -n "$branch" ]]; then
-      git clone --depth 1 --branch "$branch" "$repo_url" "$target_dir"
+      git clone --depth 1 --branch "$branch" "$repo_url" "$target_dir" --quiet
     else
-      git clone --depth 1 "$repo_url" "$target_dir"
+      git clone --depth 1 "$repo_url" "$target_dir" --quiet
     fi
   fi
 }
