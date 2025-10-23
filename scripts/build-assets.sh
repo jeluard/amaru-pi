@@ -6,17 +6,17 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 set -o allexport
 source ${SCRIPT_DIR}/../overlays/home/pi/amaru.env
 set +o allexport # Restore regular behavior
+# Make sure that OpenTelemetry is always disabled
+export AMARU_WITH_OPEN_TELEMETRY=false
 
 BIN_DIR="${SCRIPT_DIR}/../overlays/home/pi/bin"
 mkdir -p ${BIN_DIR}
-echo "Created bin directory: $BIN_DIR"
+echo "✅ Created bin directory: $BIN_DIR"
 
 BUILD_DIR="${SCRIPT_DIR}/../.build"
 mkdir -p ${BUILD_DIR}
 cd ${BUILD_DIR}
-echo "Created build directory: $BUILD_DIR"
-
-export CARGO_TARGET_DIR=${BUILD_DIR}/build
+echo "✅ Created build directory: $BUILD_DIR"
 
 # usage:
 #   sync_repo <git_url> <target_dir> [branch]
@@ -38,7 +38,7 @@ sync_repo() {
     if [[ -n "$branch" ]]; then
       git -C "$target_dir" checkout "$branch" || git -C "$target_dir" checkout -b "$branch" "origin/$branch"
     fi
-    git -C "$target_dir" pull --rebase
+    git -C "$target_dir" pull --rebase --quiet
   else
     echo "📥 Cloning $repo_url into $target_dir..."
     if [[ -n "$branch" ]]; then
@@ -52,31 +52,48 @@ sync_repo() {
 # Create Amaru binaries for Raspberry Pi (aarch64)
 # And package dbs in a tarball
 
-cd ${BUILD_DIR}
-sync_repo https://github.com/pragma-org/amaru $BUILD_DIR/amaru jeluard/offline
-cd amaru
-
 # Create fresh DBs locally
-make bootstrap
-cargo build --release
-./build/amaru-ledger mithril
-./build/amaru-ledger bootstrap
-tar -czf ${BIN_DIR}/dbs.tar.gz chain.mainnet.db ledger.mainnet.db
+DBS_SNAPSHOT="${BUILD_DIR}/dbs.tar.gz"
+if [ ! -f "${DBS_SNAPSHOT}" ]; then
+    echo "🔨 Building databases snapshot..."
+    cd ${BUILD_DIR}
+    sync_repo https://github.com/pragma-org/amaru $BUILD_DIR/amaru-offline jeluard/offline
+    cd amaru-offline
+
+    make bootstrap > /dev/null
+    cargo build --release --quiet > /dev/null
+    ./target/release/amaru-ledger mithril
+    ./target/release/amaru-ledger sync
+    tar -czf ${DBS_SNAPSHOT} chain.mainnet.db ledger.mainnet.db
+    echo "✅ Done: Snapshot created at ${DBS_SNAPSHOT}"
+else
+    echo "✅ Skipping: ${DBS_SNAPSHOT} already exists."
+fi
 
 # Build amaru
-cross build --target aarch64-unknown-linux-musl --release
-cp release/amaru ${BIN_DIR}
+cd ${BUILD_DIR}
+# TODO remove once jeluard/offline is merged
+sync_repo https://github.com/pragma-org/amaru $BUILD_DIR/amaru
+cd amaru
+echo "🔨 Building Amaru binaries..."
+cross build --target aarch64-unknown-linux-musl --release --quiet > /dev/null 2>&1 #|| echo "Failed to build amaru!" >&2; exit 1;
+cp target/aarch64-unknown-linux-musl/release/amaru ${BIN_DIR}
 
 # Build amaru-doctor
 cd ${BUILD_DIR}
 sync_repo https://github.com/jeluard/amaru-doctor $BUILD_DIR/amaru-doctor
 cd amaru-doctor
-cross build --target aarch64-unknown-linux-musl --release
-cp release/amaru-doctor ${BIN_DIR}
+echo "🔨 Building Amaru Doctor binary..."
+make build-pi > /dev/null 2>&1 #|| echo "Failed to build amaru-doctor!" >&2; exit 1;
+cp target/aarch64-unknown-linux-gnu/release/amaru-doctor ${BIN_DIR}
 
 # Build amaru-pi
 cd ${BUILD_DIR}
 sync_repo https://github.com/jeluard/amaru-pi $BUILD_DIR/amaru-pi
-cd release/amaru-pi
-make build
-cp release/amaru-pi ${BIN_DIR}
+cd amaru-pi/app
+echo "🔨 Building Amaru PI binary..."
+make build > /dev/null 2>&1 #|| echo "Failed to build amaru-pi!" >&2; exit 1;
+cp target/aarch64-unknown-linux-gnu/release/amaru-pi ${BIN_DIR}
+
+chmod +x ${BIN_DIR}/amaru*
+echo "✅ All binaries ready and copied in: $BIN_DIR"
