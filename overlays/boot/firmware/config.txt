@@ -5,6 +5,7 @@
 # Uncomment some or all of these to enable the optional hardware interfaces
 #dtparam=i2c_arm=on
 #dtparam=i2s=on
+# To manage PIM589 Display Hat Mini
 dtparam=spi=on
 
 # Enable audio (loads snd_bcm2835)
@@ -37,8 +38,7 @@ arm_64bit=1
 disable_overscan=1
 
 # Run as fast as firmware / board allows
-arm_boost=0
-#arm_boost=1
+arm_boost=1
 
 [cm4]
 # Enable host mode on the 2711 built-in XHCI USB controller.
@@ -56,11 +56,5 @@ dtoverlay=vc4-kms-dpi-disable,display=0
 
 # Disable HDMI1
 dtoverlay=vc4-kms-dpi-disable,display=1
-
-arm_freq=1500
-gpu_mem=16
-gpu_freq=500
-#over_voltage=-2
-#dtoverlay=spi0-1cs
 
 dtparam=pwm=on
