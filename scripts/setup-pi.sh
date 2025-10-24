@@ -68,7 +68,7 @@ fi
 echo "→ Uploading overlays/ → ${REMOTE}:/ ..."
 (
   cd "${OVERLAYS_DIR}"
-  tar -cpf - . | ssh $SSH_OPTS "$REMOTE" 'sudo tar -C / -xpf -'
+  tar -cf - . | ssh $SSH_OPTS "$REMOTE" 'sudo tar --no-same-owner -C /  -xpf - ; sudo chown -R $(id -u):$(id -g) $HOME'
 )
 echo "✓ Upload complete."
 
@@ -125,7 +125,7 @@ fi
 # ──────────────────────────────────────────────────────────────
 # Optional setup script execution ($SETUP_SCRIPT)
 # ──────────────────────────────────────────────────────────────
-if [[ -n "$RUN_SETUP" ]]; then
+if [[ -n "${RUN_SETUP-}" ]]; then
   echo "→ Running remote setup script: $SETUP_SCRIPT"
   ssh $SSH_OPTS "$REMOTE" 'if [[ -f $SETUP_SCRIPT ]]; then sudo bash $SETUP_SCRIPT; else echo "⚠️  $SETUP_SCRIPT not found"; fi'
 else
