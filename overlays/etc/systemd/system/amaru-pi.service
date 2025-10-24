@@ -4,9 +4,9 @@ After=network.target local-fs.target
 
 [Service]
 Type=simple
-EnvironmentFile=amaru.env
-ExecStart=amaru-pi
-WorkingDirectory=/home/pi/
+EnvironmentFile=/home/pi/amaru.env
+ExecStart=/home/pi/bin/amaru-pi
+WorkingDirectory=/home/pi/bin
 Restart=always
 RestartSec=2
 User=pi
