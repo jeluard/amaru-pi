@@ -52,3 +52,13 @@ sudo apt clean
 ## Install overlays
 
 run `scripts/setup-pi.sh` and then reboot
+
+## You're not alone
+
+Just in case we have several boxes on the same network, we may want to change this boxes hostname:
+
+```bash
+sudo echo "amaru-$(tr -dc A-Z0-9 </dev/urandom | head -c4)" > /etc/hostname
+```
+
+Carefully take note of the new name to connect to it later (after reboot)
