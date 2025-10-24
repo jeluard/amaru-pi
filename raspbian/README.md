@@ -32,6 +32,15 @@ sudo apt upgrade -y
 sudo apt clean
 ```
 
+```bash
+sudo apt purge -y cloud-init
+sudo apt purge -y man-db
+sudo apt autoremove -y
+sudo systemctl disable keyboard-setup.service
+sudo systemctl mask keyboard-setup.service
+sudo sed -i -e 's/.*root=\([^ ]*\).*/console=serial0,115200 console=tty1 root=\1 rootfstype=ext4 fsck.repair=no loglevel=3 fastboot/' /boot/firmware/cmdline.txt
+```
+
 ## Install needed packages
 
 ```bash
