@@ -1,5 +1,5 @@
 run-simulator:
-# If on OSX, do `export LIBRARY_PATH="$LIBRARY_PATH:$(brew --prefix)/lib"`
+	[ "$$(uname)" = "Darwin" ] && export LIBRARY_PATH="$${LIBRARY_PATH}:$$(brew --prefix)/lib"; cargo run
 	cargo run
 
 build:
