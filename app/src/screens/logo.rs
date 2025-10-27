@@ -6,6 +6,7 @@ use ratatui::{
     text::Text,
     widgets::Widget,
 };
+use core::panic;
 use std::time::Duration;
 use tachyonfx::{EffectManager, EffectTimer, Interpolation, fx};
 
@@ -14,7 +15,9 @@ pub struct LogoScreen {
     triggered: bool,
     // We’ll store the logo area to know where to explode
     logo_area: Option<Rect>,
+    delay_explosion: Duration,
     splash_duration: Duration,
+    time_in_stage: Duration,
 }
 
 const LOGO: &str = indoc::indoc! {"
@@ -23,13 +26,15 @@ const LOGO: &str = indoc::indoc! {"
 "};
 
 impl LogoScreen {
-    pub fn new(splash_duration: Duration) -> Self {
+    pub fn new(delay_explosion: Duration, splash_duration: Duration) -> Self {
         let mgr = EffectManager::default();
         Self {
             effects: mgr,
             triggered: false,
             logo_area: None,
+            delay_explosion,
             splash_duration,
+            time_in_stage: Duration::from_millis(0),
         }
     }
 
@@ -70,6 +75,8 @@ impl Screen for LogoScreen {
     fn display(&mut self, elapsed: Duration, frame: &mut Frame) {
         self.on_tick(elapsed, frame);
 
+        self.time_in_stage += elapsed;
+
         let area = frame.area();
         let vertical = Layout::default()
             .direction(Direction::Vertical)
@@ -97,7 +104,7 @@ impl Screen for LogoScreen {
         frame.render_widget(&mut *self, centered);
 
         // After first render, you may trigger the explosion
-        if !self.triggered {
+        if !self.triggered && self.time_in_stage >= self.delay_explosion {
             self.trigger_explosion();
         }
     }

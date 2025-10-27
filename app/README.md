@@ -15,7 +15,7 @@ You can also take a screenshot using the simalator by setting `EG_SIMULATOR_DUMP
 To build and deploy on a pi:
 
 ```shell
-export SCP_TARGET=pi@pi.local:.
+export SSH_REMOTE=pi@pi.local:.
 make upload
 ```
 

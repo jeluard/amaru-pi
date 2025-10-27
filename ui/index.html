@@ -24,7 +24,7 @@
 <body>
 
   <header>
-    <h2>Amaru PI</h2>
+    <a href="#"><h2>Amaru PI</h2></a>
     <nav aria-label="Main navigation">
         <ul />
     </nav>
@@ -74,17 +74,18 @@
     }
 
     const pages = {
+      'Default': {page: 'default.html', hidden: true},
       'Getting started': {page: 'getting-started.html'},
       'Build': {page: 'build.html'},
       'App': {page: 'app.html'},
-      'Claim': {page: 'claim.html', disabled: true},
+      'Claim': {page: 'claim.html', disabled: false},
     };
 
     document.addEventListener('DOMContentLoaded', () => {
         const navList = document.querySelector('header nav ul');
         navList.innerHTML = '';
 
-        Object.entries(pages).forEach(([title, value]) => {
+        Object.entries(pages).filter(([_, value]) => !value.hidden).forEach(([title, value]) => {
             const li = document.createElement('li');
             const a = document.createElement('a');
 

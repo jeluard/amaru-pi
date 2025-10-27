@@ -4,4 +4,4 @@ pub mod button;
 #[cfg(feature = "display_hat")]
 pub mod input;
 pub mod screens;
-//pub mod wifi;
+pub mod wifi;

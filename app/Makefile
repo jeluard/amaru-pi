@@ -11,8 +11,8 @@ else ifeq ($(shell uname -s),Darwin)
 endif
 
 upload: build
-	@if [ -z "$${SCP_TARGET}" ]; then \
-		echo "Error: SCP_TARGET is not set!"; \
+	@if [ -z "$${SSH_REMOTE}" ]; then \
+		echo "Error: SSH_REMOTE is not set!"; \
 		exit 1; \
 	fi
-	scp target/aarch64-unknown-linux-gnu/release/amaru-pi ${SCP_TARGET}
+	scp target/aarch64-unknown-linux-gnu/release/amaru-pi ${SSH_REMOTE}

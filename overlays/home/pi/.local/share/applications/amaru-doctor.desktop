@@ -1,0 +1,7 @@
+[Desktop Entry]
+Name=Amaru Doctor
+Icon=/usr/share/pixmaps/openbox.xpm
+Exec= /home/pi/scripts/amaru-doctor-start.sh
+Type=Application
+Encoding=UTF-8
+Terminal=false

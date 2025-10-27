@@ -2,11 +2,13 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 # Automatically export all variables
 set -o allexport
 source ${SCRIPT_DIR}/../overlays/home/pi/amaru.env
 set +o allexport # Restore regular behavior
-# Make sure that OpenTelemetry is always disabled
+
+# Make sure that OpenTelemetry is always disabled during build
 export AMARU_WITH_OPEN_TELEMETRY=false
 
 BIN_DIR="${SCRIPT_DIR}/../overlays/home/pi/bin"
@@ -53,7 +55,7 @@ sync_repo() {
 # And package dbs in a tarball
 
 # Create fresh DBs locally
-DBS_SNAPSHOT="${BUILD_DIR}/dbs.tar.gz"
+DBS_SNAPSHOT="${BIN_DIR}/dbs.tar.gz"
 if [ ! -f "${DBS_SNAPSHOT}" ]; then
     echo "🔨 Building databases snapshot..."
     cd ${BUILD_DIR}

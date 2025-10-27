@@ -1,6 +1,7 @@
 [Unit]
 Description=Amaru PI
-After=network.target local-fs.target
+Requires=splash.service
+After=local-fs.target splash.service
 
 [Service]
 Type=simple

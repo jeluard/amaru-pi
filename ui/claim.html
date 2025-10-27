@@ -1,16 +1,207 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Amaru PI - getting started</title>
-  <link rel="stylesheet"   href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+  <title>Amaru PI - claim</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/@meshsdk/core@1.10.0/dist/mesh.umd.min.js"></script>
   <style>
-    html { height: 100%; }
-    body { display: flex; height: 100%; justify-content: center; align-items: center; }
+    html {
+      height: 100%;
+    }
+
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      flex-direction: column;
+      gap: 1rem;
+      padding: 1rem;
+    }
+
+    #success-image {
+      max-width: 300px;
+      display: none;
+    }
+
+    #send-btn {
+      display: block;
+      margin: 0.5rem auto 0 auto;
+      /* top margin + horizontal center */
+    }
   </style>
 </head>
+
 <body>
-  <h2>TODO Claim</h2>
+
+  <form id="tx-form" novalidate>
+    <input type="text" id="input-words" placeholder="word1-word2-word3" pattern="^[a-zA-Z]+-[a-zA-Z]+-[a-zA-Z]+$"
+      required />
+    <div class="error-message" id="error-msg">Enter exactly three words separated by hyphens</div>
+    <button id="send-btn" disabled>Send Transaction</button>
+  </form>
+
+  <div id="success-section">
+    <p class="info-message" id="waiting-msg">Transaction is being confirmed...</p>
+    <div id="tx-details"></div>
+    <img id="nft-image" src="" alt="NFT Image" style="max-width:300px; display:none; margin-top:1rem;">
+  </div>
+
+  <script>
+    const input = document.getElementById('input-words');
+    const button = document.getElementById('send-btn');
+    const errorMsg = document.getElementById('error-msg');
+    const form = document.getElementById('tx-form');
+
+    const successSection = document.getElementById('success-section');
+    const waitingMsg = document.getElementById('waiting-msg');
+    const txDetails = document.getElementById('tx-details');
+    const nftImage = document.getElementById('nft-image');
+
+    // Prefill input from URL param
+    const urlParams = new URLSearchParams(window.location.search);
+    const wordsParam = urlParams.get('words');
+    if (wordsParam) input.value = wordsParam;
+
+    // Validate input
+    function validateInput() {
+      if (input.validity.valid) {
+        errorMsg.style.display = 'none';
+        button.disabled = false;
+      } else {
+        errorMsg.style.display = 'block';
+        button.disabled = true;
+      }
+    }
+    input.addEventListener('input', validateInput);
+    window.addEventListener('load', validateInput);
+
+    // Utility to wait
+    function sleep(ms) { return new Promise(resolve => setTimeout(resolve, ms)); }
+
+    // Check transaction status until confirmed
+    async function waitForTransaction(wallet, txHash) {
+      let confirmed = false;
+      while (!confirmed) {
+        try {
+          const txInfo = await wallet.getTx(txHash);
+          if (txInfo && txInfo.confirmed) {
+            confirmed = true;
+            return txInfo;
+          }
+        } catch (e) {
+          console.log("Polling transaction...", e.message);
+        }
+        await sleep(5000);
+      }
+    }
+
+    // Check wallet for NFT by policyId or assetName
+    async function checkWalletForNFT(wallet, policyId, assetName) {
+      const assets = await wallet.getAssets();
+      for (let asset of assets) {
+        if (asset.unit.startsWith(policyId) && asset.assetName === assetName) {
+          return asset;
+        }
+      }
+      return null;
+    }
+
+    // Show transaction details & NFT
+    function showSuccess(txInfo, nftUrl) {
+      form.style.display = 'none';
+      successSection.style.display = 'block';
+      waitingMsg.style.display = 'none';
+      txDetails.innerHTML = `
+    <p><strong>Transaction Hash:</strong> ${txInfo.hash}</p>
+    <p><strong>Amount:</strong> ${txInfo.value.lovelace / 1_000_000} ADA</p>
+    <p><strong>Metadata Words:</strong> ${txInfo.metadata?.[674]?.words || ''}</p>
+  `;
+      nftImage.src = nftUrl;
+      nftImage.style.display = 'block';
+    }
+
+    // On load, check if user already submitted a transaction
+    async function detectExistingTxOrNFT() {
+      const lastTxHash = localStorage.getItem('lastTxHash');
+      const wallet = new Mesh.Wallet({ network: "Mainnet" });
+      await wallet.connect();
+
+      if (lastTxHash) {
+        // Check tx status
+        const txInfo = await wallet.getTx(lastTxHash);
+        if (txInfo && !txInfo.confirmed) {
+          // Transaction pending
+          form.style.display = 'none';
+          successSection.style.display = 'block';
+          waitingMsg.style.display = 'block';
+          txDetails.innerHTML = `<p>Transaction pending: ${lastTxHash}</p>`;
+          const confirmedTx = await waitForTransaction(wallet, lastTxHash);
+          showSuccess(confirmedTx, confirmedTx.metadata?.[674]?.nftImage || "https://via.placeholder.com/300x200.png?text=NFT");
+          return;
+        } else if (txInfo && txInfo.confirmed) {
+          // Already confirmed
+          showSuccess(txInfo, txInfo.metadata?.[674]?.nftImage || "https://via.placeholder.com/300x200.png?text=NFT");
+          return;
+        }
+      }
+
+      // Check wallet for NFT (example: policyId + assetName from metadata)
+      const nftAsset = await checkWalletForNFT(wallet, 'YOUR_POLICY_ID_HERE', 'NFT_ASSET_NAME_HERE');
+      if (nftAsset) {
+        showSuccess({ hash: nftAsset.txHash, value: { lovelace: 0 }, metadata: {} }, "https://via.placeholder.com/300x200.png?text=NFT");
+      }
+    }
+
+    // Run detection on page load
+    window.addEventListener('load', detectExistingTxOrNFT);
+
+    // Form submit handler (same as previous)
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const words = input.value.trim();
+      if (!words) return;
+
+      button.disabled = true;
+      button.textContent = "Sending...";
+
+      try {
+        const wallet = new Mesh.Wallet({ network: "Mainnet" });
+        await wallet.connect();
+
+        const tx = new Mesh.Transaction({ initiator: wallet });
+        tx.addOutput({
+          address: wallet.getChangeAddress(),
+          value: { lovelace: 1000000 }
+        });
+        tx.addMetadata({ 674: { words } });
+
+        const txHash = await tx.submit();
+        console.log("Transaction submitted:", txHash);
+
+        localStorage.setItem('lastTxHash', txHash);
+
+        form.style.display = 'none';
+        successSection.style.display = 'block';
+        waitingMsg.style.display = 'block';
+        txDetails.innerHTML = '';
+
+        const confirmedTx = await waitForTransaction(wallet, txHash);
+        showSuccess(confirmedTx, confirmedTx.metadata?.[674]?.nftImage || "https://via.placeholder.com/300x200.png?text=NFT");
+
+      } catch (err) {
+        console.error(err);
+        alert("Transaction failed: " + err.message);
+        button.disabled = false;
+        button.textContent = "Send Transaction";
+        form.style.display = 'block';
+        successSection.style.display = 'none';
+      }
+    });
+  </script>
 </body>
+
 </html>

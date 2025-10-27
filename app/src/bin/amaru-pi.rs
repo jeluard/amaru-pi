@@ -1,6 +1,7 @@
 use amaru_pi::backends;
 use amaru_pi::screens::Screen;
-use amaru_pi::screens::chart::ChartScreen;
+use amaru_pi::screens::metrics::ChartScreen;
+use amaru_pi::screens::tip::TipScreen;
 use amaru_pi::screens::color::ColorScreen;
 use amaru_pi::screens::exit::ExitScreen;
 use amaru_pi::screens::logo::LogoScreen;
@@ -17,14 +18,16 @@ use std::time::{Duration, Instant};
 enum CurrentScreen {
     Chart,
     Color,
+    Tip,
     Exit,
 }
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    let splash_duration = Duration::from_millis(2000);
-    let mut logo = LogoScreen::new(splash_duration);
+    let splash_duration = Duration::from_millis(5000);
+    let mut logo = LogoScreen::new(Duration::from_millis(2000), splash_duration);
     let mut chart_screen = ChartScreen::default();
+    let mut tip_screen = TipScreen::default();
     let mut color_screen = ColorScreen::default();
     let mut exit_screen = ExitScreen::new();
 
@@ -36,7 +39,7 @@ async fn main() -> Result<()> {
 
     let mut terminal = Terminal::new(backend).unwrap();
 
-    let mut current_screen = CurrentScreen::Chart;
+    let mut current_screen = CurrentScreen::Tip;
 
     let startup = Instant::now();
     let mut last_frame = Instant::now();
@@ -44,7 +47,7 @@ async fn main() -> Result<()> {
     while running.load(Ordering::SeqCst) {
         let elapsed = last_frame.elapsed();
         last_frame = Instant::now();
-        let show_first = startup.elapsed() < splash_duration;
+        let show_first = false;//startup.elapsed() < splash_duration;
 
         #[cfg(feature = "display_hat")]
         {
@@ -86,6 +89,7 @@ async fn main() -> Result<()> {
                 logo.display(elapsed, frame);
             } else {
                 match current_screen {
+                    CurrentScreen::Tip => tip_screen.display(elapsed, frame),
                     CurrentScreen::Chart => chart_screen.display(elapsed, frame),
                     CurrentScreen::Color => color_screen.display(elapsed, frame),
                     CurrentScreen::Exit => exit_screen.display(elapsed, frame),
