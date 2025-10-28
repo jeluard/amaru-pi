@@ -5,16 +5,6 @@ use amaru_doctor::otel::service::OtelCollectorService;
 use amaru_doctor::prometheus::model::Timestamp;
 use amaru_doctor::prometheus::service::{MetricsPoller, MetricsPollerHandle};
 use amaru_kernel::Slot;
-/// A Ratatui example that demonstrates how to handle charts.
-///
-/// This example demonstrates how to draw various types of charts such as line,
-/// bar, and scatter charts.
-///
-/// This example runs with the Ratatui library code in the branch that you are
-/// currently reading. See the [`latest`] branch for the code which works with
-/// the most recent Ratatui release.
-///
-/// [`latest`]: https://github.com/ratatui/ratatui/tree/latest
 use ratatui::Frame;
 use ratatui::layout::{Alignment, Constraint, Direction, Layout, Rect};
 use ratatui::style::{Color, Modifier, Style, Stylize};
@@ -34,8 +24,6 @@ pub struct TipScreen {
     reader: JournalReader,
     current_slot: Option<Slot>,
     last_refresh: Instant,
-    /*otel_view: OtelViewState,
-    task_handle: JoinHandle<anyhow::Result<()>>,*/
 }
 
 impl TipScreen {
@@ -46,16 +34,11 @@ impl TipScreen {
 
 impl Default for TipScreen {
     fn default() -> Self {
-        /*let otel_service = OtelCollectorService::new("0.0.0.0:4317");
-        let otel_handle = otel_service.start();
-        let otel_view = OtelViewState::new(otel_handle.snapshot);*/
         let reader = JournalReader::new("amaru.service");
         TipScreen {
             reader,
             current_slot: None,
             last_refresh: Instant::now(),
-            /*otel_view,
-            task_handle: otel_handle.task_handle*/
         }
     }
 }

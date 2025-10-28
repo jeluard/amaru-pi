@@ -10,9 +10,7 @@ use anyhow::Result;
 use ratatui::prelude::*;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::thread::{self, current};
 use std::time::{Duration, Instant};
-use tokio::sync::Mutex;
 
 // Demos from https://github.com/j-g00da/mousefood-esp32-demo/
 // https://github.com/j-g00da/mousefood/tree/main/examples/simulator
@@ -73,14 +71,13 @@ async fn main() -> Result<()> {
 
     let mut terminal = Terminal::new(backend).unwrap();
 
-    let mut current_screen = CurrentScreen::Tip;
+    let current_screen = CurrentScreen::Tip;
 
     let startup = Instant::now();
     let mut last_frame = Instant::now();
     let running = Arc::new(AtomicBool::new(true));
-    let mut count = 0;
+
     while running.load(Ordering::SeqCst) {
-        count += 1;
         let elapsed = last_frame.elapsed();
         last_frame = Instant::now();
         let show_first = startup.elapsed() < splash_duration;
@@ -115,10 +112,6 @@ async fn main() -> Result<()> {
                 }
             }
         }
-
-        /*if count % 50 == 0 {
-            current_screen = next_screen(current_screen);
-        }*/
 
         terminal.draw(|frame| {
             if show_first {
