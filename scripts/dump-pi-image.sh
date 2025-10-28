@@ -14,11 +14,15 @@ list_devices() {
 }
 
 # --- Step 1: Before ---
-read -rp "🔁 Make sure your SD card is unplugged and press Enter to continue..."
+read -rp "➡️ Make sure your SD card is unplugged and press Enter to continue..."
 
 BEFORE=$(list_devices)
 
-read -rp "🔁 Now insert your SD card, wait a couple seconds and press Enter to continue..."
+read -rp "➡️ Now insert your SD card and press Enter to continue..."
+
+echo "🔁  Waiting for the card detection.."
+# Wait some time to ensure the sdcard is detected
+sleep 3
 
 # --- Step 2: After ---
 AFTER=$(list_devices)
@@ -32,7 +36,7 @@ if [[ -z "$NEW_DEVICE" ]]; then
 fi
 
 echo "🧩 Detected device: $NEW_DEVICE"
-read -rp "✅ Confirm this is your SD card (yes/NO): " CONFIRM
+read -rp "➡️ Confirm this is your SD card (yes/NO): " CONFIRM
 if [[ "$CONFIRM" != "yes" ]]; then
     echo "❌ Aborted."
     exit 1
@@ -40,19 +44,17 @@ fi
 
 DEVICE="$NEW_DEVICE"
 
+IMAGE="sdcard.img"
 # --- Step 4: Perform dump ---
 if [[ "$OS" == "Darwin" ]]; then
     RAW="${DEVICE/disk/rdisk}"
     echo "📀 Using raw device: $RAW"
-    DD_CMD=(sudo dd if="$RAW" bs=4m status=progress)
+    sudo dd if="$RAW" of=${IMAGE} bs=4m status=progress
 else
-    DD_CMD=(sudo dd if="$DEVICE" bs=4M status=progress conv=sparse)
+    sudo dd if="$DEVICE" of=${IMAGE} bs=4M status=progress conv=sparse
 fi
-
-echo "🗜️ Compressing with gzip..."
-"${DD_CMD[@]}" | gzip -c > "${OUT}.gz"
+sudo chown "$USER:$(id -gn)" ${IMAGE}
 
 sync
 
-echo "✅ Done! Backup saved as:"
-echo "➡️  $OUT"
+echo "✅ Done! Dump saved as: $OUT"
