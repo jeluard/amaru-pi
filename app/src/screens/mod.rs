@@ -1,7 +1,6 @@
 use ratatui::Frame;
 use std::time::Duration;
 
-pub mod chart;
 pub mod color;
 pub mod exit;
 pub mod logo;

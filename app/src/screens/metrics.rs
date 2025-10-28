@@ -1,3 +1,16 @@
+use amaru_doctor::prometheus::model::Timestamp;
+use amaru_doctor::prometheus::service::{MetricsPoller, MetricsPollerHandle};
+use amaru_kernel::cbor::decode::info;
+
+use axum::{
+    Router,
+    http::{HeaderMap, StatusCode},
+    response::IntoResponse,
+    routing::post,
+};
+use bytes::Bytes;
+use opentelemetry_proto::tonic::collector::metrics::v1::ExportMetricsServiceRequest;
+use prost::Message;
 /// A Ratatui example that demonstrates how to handle charts.
 ///
 /// This example demonstrates how to draw various types of charts such as line,
@@ -14,9 +27,10 @@ use ratatui::style::{Color, Modifier, Style, Stylize};
 use ratatui::symbols::{self, Marker};
 use ratatui::text::{Line, Span};
 use ratatui::widgets::{Axis, Block, Chart, Dataset, GraphType, LegendPosition};
+use std::net::SocketAddr;
 use std::time::Duration;
 
-pub struct ChartScreen {
+pub struct MetricsScreen {
     signal1: SinSignal,
     data1: Vec<(f64, f64)>,
     signal2: SinSignal,
@@ -24,7 +38,41 @@ pub struct ChartScreen {
     window: [f64; 2],
 }
 
-impl Default for ChartScreen {
+impl MetricsScreen {
+    pub async fn start(&self) -> Result<(), anyhow::Error> {
+        let app = Router::new().route(
+            "/v1/metrics",
+            post(async |headers: HeaderMap, body: Bytes| {
+                match ExportMetricsServiceRequest::decode(body.as_ref()) {
+                    Ok(req) => {
+                        for resource_metrics in req.resource_metrics {
+                            //println!("Resource metrics: {:?}", resource_metrics.resource);
+                            for scope_metrics in resource_metrics.scope_metrics {
+                                for metric in scope_metrics.metrics {
+                                    println!("Metric: {} {:?}", metric.name, metric.data);
+                                }
+                            }
+                        }
+                        StatusCode::OK
+                    }
+                    Err(err) => {
+                        println!("Failed to decode protobuf: {:?}", err);
+                        StatusCode::BAD_REQUEST
+                    }
+                }
+            }),
+        );
+
+        let addr = SocketAddr::from(([0, 0, 0, 0], 4318));
+        println!("Listening on http://{}", addr);
+
+        axum::serve(tokio::net::TcpListener::bind(addr).await?, app).await?;
+
+        Ok(())
+    }
+}
+
+impl Default for MetricsScreen {
     fn default() -> Self {
         let mut signal1 = SinSignal::new(0.2, 3.0, 18.0);
         let mut signal2 = SinSignal::new(0.1, 2.0, 10.0);
@@ -68,11 +116,14 @@ impl Iterator for SinSignal {
     }
 }
 
-impl ChartScreen {
-    fn on_tick(&mut self, _duration: Duration, _frame: &mut Frame) {
-        self.data1.drain(0..5);
-        self.data1.extend(self.signal1.by_ref().take(5));
+fn create_point_f64(metric: &(f64, Timestamp)) -> (f64, f64) {
+    let x_time = metric.1.timestamp_micros() as f64 / 1_000_000.0;
+    let y_value = metric.0;
+    (x_time, y_value)
+}
 
+impl MetricsScreen {
+    fn on_tick(&mut self, _duration: Duration, _frame: &mut Frame) {
         self.data2.drain(0..10);
         self.data2.extend(self.signal2.by_ref().take(10));
 
@@ -81,7 +132,7 @@ impl ChartScreen {
     }
 }
 
-impl crate::screens::Screen for ChartScreen {
+impl crate::screens::Screen for MetricsScreen {
     fn display(&mut self, duration: Duration, frame: &mut Frame) {
         self.on_tick(duration, frame);
 
@@ -91,14 +142,14 @@ impl crate::screens::Screen for ChartScreen {
         let [animated_chart, bar_chart] = top.layout(&horizontal);
         let [line_chart, scatter] = bottom.layout(&Layout::horizontal([Constraint::Fill(1); 2]));
 
-        self.render_animated_chart(frame, animated_chart);
-        render_barchart(frame, bar_chart);
-        render_line_chart(frame, line_chart);
-        render_scatter(frame, scatter);
+        self.render_animated_chart(frame, frame.area());
+        //render_barchart(frame, bar_chart);
+        //render_line_chart(frame, line_chart);
+        //render_scatter(frame, scatter);
     }
 }
 
-impl ChartScreen {
+impl MetricsScreen {
     fn render_animated_chart(&self, frame: &mut Frame, area: Rect) {
         let x_labels = vec![
             Span::styled(
@@ -211,49 +262,6 @@ fn render_line_chart(frame: &mut Frame, area: Rect) {
                 .labels(["0".bold(), "2.5".into(), "5.0".bold()]),
         )
         .legend_position(Some(LegendPosition::TopLeft))
-        .hidden_legend_constraints((Constraint::Ratio(1, 2), Constraint::Ratio(1, 2)));
-
-    frame.render_widget(chart, area);
-}
-
-fn render_scatter(frame: &mut Frame, area: Rect) {
-    let datasets = vec![
-        Dataset::default()
-            .name("Heavy")
-            .marker(Marker::Dot)
-            .graph_type(GraphType::Scatter)
-            .style(Style::new().yellow())
-            .data(&HEAVY_PAYLOAD_DATA),
-        Dataset::default()
-            .name("Medium".underlined())
-            .marker(Marker::Braille)
-            .graph_type(GraphType::Scatter)
-            .style(Style::new().magenta())
-            .data(&MEDIUM_PAYLOAD_DATA),
-        Dataset::default()
-            .name("Small")
-            .marker(Marker::Dot)
-            .graph_type(GraphType::Scatter)
-            .style(Style::new().cyan())
-            .data(&SMALL_PAYLOAD_DATA),
-    ];
-
-    let chart = Chart::new(datasets)
-        .block(Block::bordered().title(Line::from("Scatter chart").cyan().bold().centered()))
-        .x_axis(
-            Axis::default()
-                .title("Year")
-                .bounds([1960., 2020.])
-                .style(Style::default().fg(Color::Gray))
-                .labels(["1960", "1990", "2020"]),
-        )
-        .y_axis(
-            Axis::default()
-                .title("Cost")
-                .bounds([0., 75000.])
-                .style(Style::default().fg(Color::Gray))
-                .labels(["0", "37 500", "75 000"]),
-        )
         .hidden_legend_constraints((Constraint::Ratio(1, 2), Constraint::Ratio(1, 2)));
 
     frame.render_widget(chart, area);

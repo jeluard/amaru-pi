@@ -83,14 +83,7 @@ impl crate::screens::Screen for ColorScreen {
 /// fps calculation and the colors widget to update the colors to render.
 impl Widget for &mut ColorScreen {
     fn render(self, area: Rect, buf: &mut Buffer) {
-        use Constraint::{Length, Min};
-        let [top, colors] = area.layout(&Layout::vertical([Length(1), Min(0)]));
-        let [title, fps] = top.layout(&Layout::horizontal([Min(0), Length(8)]));
-        Text::from("colors_rgb example. Press q to quit")
-            .centered()
-            .render(title, buf);
-        self.fps_widget.render(fps, buf);
-        self.colors_widget.render(colors, buf);
+        self.colors_widget.render(area, buf);
     }
 }
 

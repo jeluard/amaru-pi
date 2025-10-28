@@ -1,4 +1,5 @@
 use crate::screens::Screen;
+use core::panic;
 use ratatui::{
     Frame,
     buffer::Buffer,
@@ -6,7 +7,6 @@ use ratatui::{
     text::Text,
     widgets::Widget,
 };
-use core::panic;
 use std::time::Duration;
 use tachyonfx::{EffectManager, EffectTimer, Interpolation, fx};
 

@@ -1,9 +1,10 @@
 use amaru_doctor::model::otel_view::OtelViewState;
 use amaru_doctor::model::prom_metrics::PromMetricsViewState;
-use amaru_doctor::otel::service::OtelCollectorService;
 use amaru_doctor::otel::TraceGraphSnapshot;
+use amaru_doctor::otel::service::OtelCollectorService;
 use amaru_doctor::prometheus::model::Timestamp;
 use amaru_doctor::prometheus::service::{MetricsPoller, MetricsPollerHandle};
+use amaru_kernel::Slot;
 /// A Ratatui example that demonstrates how to handle charts.
 ///
 /// This example demonstrates how to draw various types of charts such as line,
@@ -15,59 +16,142 @@ use amaru_doctor::prometheus::service::{MetricsPoller, MetricsPollerHandle};
 ///
 /// [`latest`]: https://github.com/ratatui/ratatui/tree/latest
 use ratatui::Frame;
-use ratatui::layout::{Alignment, Constraint, Layout, Rect};
+use ratatui::layout::{Alignment, Constraint, Direction, Layout, Rect};
 use ratatui::style::{Color, Modifier, Style, Stylize};
 use ratatui::symbols::{self, Marker};
 use ratatui::text::{Line, Span};
 use ratatui::widgets::{Axis, Block, Chart, Dataset, GraphType, LegendPosition, Paragraph, Wrap};
-use std::time::Duration;
+use std::io::BufRead;
+use std::io::BufReader;
+use std::process::{Command, Stdio};
+use std::time::{Duration, Instant};
+use tokio::task::JoinHandle;
+use tui_big_text::{BigText, PixelSize};
+
+use crate::logs::extract_tip_changed;
 
 pub struct TipScreen {
-    otel_view: OtelViewState,
+    reader: JournalReader,
+    current_slot: Option<Slot>,
+    last_refresh: Instant,
+    /*otel_view: OtelViewState,
+    task_handle: JoinHandle<anyhow::Result<()>>,*/
+}
+
+impl TipScreen {
+    fn update_slot(&mut self, slot: Slot) {
+        self.current_slot = Some(slot);
+    }
 }
 
 impl Default for TipScreen {
     fn default() -> Self {
-        let otel_service = OtelCollectorService::new("0.0.0.0:4317");
+        /*let otel_service = OtelCollectorService::new("0.0.0.0:4317");
         let otel_handle = otel_service.start();
-        let otel_view = OtelViewState::new(otel_handle.snapshot);
-        
+        let otel_view = OtelViewState::new(otel_handle.snapshot);*/
+        let reader = JournalReader::new("amaru.service");
         TipScreen {
-            otel_view,
+            reader,
+            current_slot: None,
+            last_refresh: Instant::now(),
+            /*otel_view,
+            task_handle: otel_handle.task_handle*/
         }
+    }
+}
+
+pub struct JournalReader {
+    service: String,
+    last_cursor: Option<String>,
+}
+
+impl JournalReader {
+    pub fn new(service: impl Into<String>) -> Self {
+        Self {
+            service: service.into(),
+            last_cursor: None,
+        }
+    }
+
+    pub fn read_logs(&mut self) -> anyhow::Result<Vec<String>> {
+        let mut cmd = Command::new("journalctl");
+        cmd.arg("-u")
+            .arg(&self.service)
+            .arg("--output=short-iso")
+            .arg("--show-cursor")
+            .arg("--no-pager");
+
+        if let Some(ref cursor) = self.last_cursor {
+            cmd.arg("--after-cursor").arg(cursor);
+        } else {
+            cmd.arg("--since").arg("1 minute ago");
+        }
+
+        let mut child = cmd
+            .stdout(Stdio::piped())
+            .stderr(Stdio::null())
+            .spawn()
+            .expect("failed to spawn journalctl");
+
+        let stdout = child.stdout.take().unwrap();
+        let reader = BufReader::new(stdout);
+
+        let mut logs = Vec::new();
+        let mut last_cursor = None;
+
+        for line_result in reader.lines() {
+            let line = line_result?;
+            if line.starts_with("-- cursor:") {
+                last_cursor = Some(line.trim_start_matches("-- cursor:").trim().to_string());
+            } else {
+                logs.push(line);
+            }
+        }
+
+        if let Some(cursor) = last_cursor {
+            self.last_cursor = Some(cursor);
+        }
+
+        let _ = child.wait()?;
+        Ok(logs)
     }
 }
 
 impl crate::screens::Screen for TipScreen {
     fn display(&mut self, duration: Duration, frame: &mut Frame) {
-        self.otel_view.sync_state();
-        println!("{:?}", self.otel_view.last_synced_data);
-        let name = if let Some(value) =  self.otel_view.trace_graph_source.load().spans.values().next() {
-            value.name.clone()
-        } else {
-            "1936839".to_string()
-        };
-        let text = vec![
-            Line::from(Span::styled(format!("Slot #{}", name), Style::default())),
-            Line::from(Span::styled("This is centered text.", Style::default())),
-        ];
+        let now = Instant::now();
+        if now - self.last_refresh > Duration::from_secs(1) {
+            self.last_refresh = now;
+            let lines = self.reader.read_logs().unwrap_or_default();
+            let tips: Vec<_> = lines
+                .iter()
+                .flat_map(|line| extract_tip_changed(line))
+                .collect();
+            if let Some(tip) = tips.last() {
+                // Set to last tip collected
+                self.update_slot((*tip).into());
+            }
+        }
 
-        // Create a paragraph widget
-        let paragraph = Paragraph::new(text)
-            .alignment(Alignment::Center) // center horizontally
-            .wrap(Wrap { trim: true })
-            .block(Block::default());
+        let chunks = Layout::default()
+            .direction(Direction::Vertical)
+            .constraints([
+                Constraint::Percentage(30),
+                Constraint::Percentage(40),
+                Constraint::Percentage(30),
+            ])
+            .split(frame.area());
 
-        let area = frame.area();
-        let text_height = 2;
-        let y_offset = area.y + (area.height.saturating_sub(text_height)) / 2;
-        let rect = Rect {
-            x: area.x,
-            y: y_offset,
-            width: area.width,
-            height: text_height,
-        };
+        let lines = self
+            .current_slot
+            .map(|slot| vec![Line::from("Slot"), format!("#{}", slot).cyan().into()])
+            .unwrap_or(vec![Line::from("Bootstrapping")]);
+        let text = BigText::builder()
+            .pixel_size(PixelSize::Quadrant)
+            .centered()
+            .lines(lines)
+            .build();
 
-        frame.render_widget(paragraph, rect);
+        frame.render_widget(text, chunks[1]);
     }
 }
