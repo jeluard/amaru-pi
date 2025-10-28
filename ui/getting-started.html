@@ -1,194 +1,169 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Mac Classic Fruit Jam — Assembly</title>
-
-<!-- PicoCSS -->
-<link rel="stylesheet" href="https://unpkg.com/@picocss/pico@1.*/css/pico.min.css">
-
-<style>
-  /* Layout tweaks */
-  .hero {
-    display: grid;
-    grid-template-columns: 1fr auto;
-    align-items: center;
-    gap: 1rem;
-  }
-  .meta {
-    font-size: 0.95rem;
-    color: gray;
-  }
-
-  /* Sticky → Floating Quick Links */
-  #mainMenu {
-    margin-top: 1rem;
-    position: relative;
-    z-index: 99;
-    transition: all 0.3s ease;
-  }
-
-  #mainMenu.floating {
-    position: fixed;
-    top: 1rem;
-    right: 1rem;
-    width: auto;
-    background: var(--card-background-color, #fff);
-    box-shadow: 0 8px 22px rgba(0,0,0,0.15);
-    border-radius: 8px;
-    padding: 0.5rem 1rem;
-  }
-
-  #mainMenu.floating ul {
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-  }
-
-  #mainMenu.floating li a {
-    font-size: 0.85rem;
-  }
-
-  /* Steps layout */
-  .figure {
-    margin: 1rem 0;
-  }
-  .step-image {
-    max-width: 100%;
-    border-radius: 6px;
-  }
-
-  ol.steps {
-    padding-left: 1.25rem;
-    margin-bottom: 1.25rem;
-  }
-</style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Amaru PI - getting started</title>
+  <link rel="stylesheet" href="https://unpkg.com/@picocss/pico@1.*/css/pico.min.css">
+  <style>
+    .hero {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 1rem;
+      align-items: center;
+    }
+    .meta {
+      font-size: 0.95rem;
+      color: gray;
+    }
+    .toc {
+      position: sticky;
+      top: 1rem;
+      max-height: calc(100vh - 2rem);
+      overflow: auto;
+      padding-right: 1rem;
+    }
+    main .figure {
+      margin: 0 0 1rem 0;
+    }
+    .step-image {
+      max-width: 100%;
+      border-radius: 6px;
+    }
+    /* nicer ordered lists spacing for steps */
+    ol.steps { padding-left: 1.25rem; margin-bottom: 1.25rem; }
+    aside .card { padding: 0.75rem; margin-bottom: 1rem; }
+    @media (min-width: 900px) {
+      .container-grid { display: grid; grid-template-columns: 1fr 320px; gap: 2rem; }
+    }
+  </style>
 </head>
-
 <body>
+  <header class="container">
+    <nav>
+      <ul>
+        <li><a href="#overview">Overview</a></li>
+        <li><a href="#parts">Parts</a></li>
+        <li><a href="#prep-hdmi">Prep HDMI Cable</a></li>
+        <li><a href="#usb-c">USB-C Breakout</a></li>
+        <li><a href="#secure-display">Secure Display</a></li>
+        <li><a href="#sd-adapter">SD Adapter</a></li>
+      </ul>
+    </nav>
+  </header>
 
-<header class="container">
-  <div class="hero">
-    <div>
-      <h1>Mac Classic Fruit Jam</h1>
-      <p class="meta">Assembly walkthrough (PicoCSS template)</p>
-      <p>Scroll down → the menu becomes a floating quick access panel.</p>
-    </div>
-    <figure>
-      <img src="https://placehold.co/240x160?text=Hero" width="240" height="160" alt="Hero">
-    </figure>
-  </div>
+  <main class="container container-grid">
+    <!-- main article column -->
+    <article>
+      <section id="overview">
+        <h2>Assembly</h2>
+        <p>Short intro: this section walks through gathering parts and assembling the Mac Classic Fruit Jam. The steps are organized into logical blocks: prep cables, secure breakouts, mount PCB, attach the display, and finishing touches.</p>
+      </section>
 
-  <!-- ✅ Single Navigation -->
-  <nav id="mainMenu">
-    <ul>
-      <li><a href="#overview">Overview</a></li>
-      <li><a href="#parts">Parts</a></li>
-      <li><a href="#prep-hdmi">Prep HDMI</a></li>
-      <li><a href="#usb-c">USB-C</a></li>
-      <li><a href="#secure-display">Display</a></li>
-      <li><a href="#sd-adapter">SD Adapter</a></li>
-      <li><a href="#finishing">Finishing</a></li>
-    </ul>
-  </nav>
-</header>
+      <section id="parts">
+        <h3>Parts</h3>
+        <p>Gather these parts and the listed fasteners before starting the build.</p>
 
+        <ul>
+          <li>5" HDMI display</li>
+          <li>Fruit Jam PCB</li>
+          <li>USB-C breakout</li>
+          <li>Right-angle HDMI plug adapters ×2</li>
+          <li>Assorted machine screws (M2.5, M3)</li>
+          <li>Rubber bumpers</li>
+        </ul>
+      </section>
 
-<main class="container">
+      <section id="prep-hdmi">
+        <h3>Prep HDMI cable</h3>
+        <figure class="figure">
+          <img class="step-image" src="https://placehold.co/800x400?text=HDMI+prep" alt="Prep HDMI">
+          <figcaption>Prepare the HDMI ribbon cable and adapters.</figcaption>
+        </figure>
 
-  <section id="overview">
-    <h2>Assembly Overview</h2>
-    <p>This document outlines the major steps in assembling the Mac Classic Fruit Jam build: cable prep, securing breakout boards, and display mounting.</p>
-  </section>
+        <ol class="steps">
+          <li>Open the release latch on each right-angle HDMI adapter.</li>
+          <li>Insert the HDMI ribbon cable into each adapter using the flex clips.</li>
+          <li>Verify the cable is firmly seated and the latch is closed.</li>
+        </ol>
+      </section>
 
-  <section id="parts">
-    <h3>Parts</h3>
-    <ul>
-      <li>5" HDMI Display</li>
-      <li>Fruit Jam PCB</li>
-      <li>USB-C Breakout</li>
-      <li>Right-angle HDMI adapters ×2</li>
-      <li>Jump wires</li>
-      <li>Machine screws (M2.5 / M3)</li>
-      <li>Rubber bumpers</li>
-    </ul>
-  </section>
+      <section id="usb-c">
+        <h3>USB-C Breakout & Wiring</h3>
+        <figure class="figure">
+          <img class="step-image" src="https://placehold.co/800x400?text=USB-C+breakout" alt="USB-C breakout">
+          <figcaption>Solder jumper wires for VBUS and GND and mount breakout.</figcaption>
+        </figure>
 
-  <section id="prep-hdmi">
-    <h3>Prepare HDMI Cable</h3>
-    <figure class="figure">
-      <img class="step-image" src="https://placehold.co/800x400?text=HDMI" alt="HDMI prep">
-      <figcaption>Flex-cable HDMI adapters.</figcaption>
-    </figure>
-    <ol class="steps">
-      <li>Open the latch on each HDMI adapter.</li>
-      <li>Insert cable with correct orientation.</li>
-      <li>Close latch securely.</li>
-    </ol>
-  </section>
+        <ol class="steps">
+          <li>Select two silicone jumper wires (example: red and blue).</li>
+          <li>Trim one end of each and tin the wires for soldering.</li>
+          <li>Solder the ground wire to GND and the power wire to VBUS on the breakout.</li>
+          <li>Secure the breakout to the printed USB mount with M2.5 × 6mm screws.</li>
+        </ol>
+      </section>
 
-  <section id="usb-c">
-    <h3>USB-C Breakout</h3>
-    <figure class="figure">
-      <img class="step-image" src="https://placehold.co/800x400?text=USB-C" alt="USB-C breakout">
-      <figcaption>USB power feed wiring.</figcaption>
-    </figure>
-    <ol class="steps">
-      <li>Tin GND and VBUS pads.</li>
-      <li>Solder jumper wires.</li>
-      <li>Mount breakout using M2.5 screws.</li>
-    </ol>
-  </section>
+      <section id="secure-display">
+        <h3>Secure 5" Display</h3>
+        <p>Mount the display to the 3D printed display mount and secure using M3 × 6mm screws.</p>
 
-  <section id="secure-display">
-    <h3>Secure Display</h3>
-    <figure class="figure">
-      <img class="step-image" src="https://placehold.co/800x400?text=Display+Mount" alt="Display">
-    </figure>
-    <ol class="steps">
-      <li>Align display to printed frame.</li>
-      <li>Fasten using M3 × 6mm screws.</li>
-      <li>Ensure cable clearance.</li>
-    </ol>
-  </section>
+        <ol class="steps">
+          <li>Orient the display so ports line up with cutouts.</li>
+          <li>Fasten the display with four M3 × 6mm machine screws.</li>
+          <li>Confirm the display sits flush and all cables reach their connectors.</li>
+        </ol>
+      </section>
 
-  <section id="sd-adapter">
-    <h3>SD Adapter Disassembly</h3>
-    <ol class="steps">
-      <li>Carefully remove plastic enclosure.</li>
-      <li>Expose PCB for fitment.</li>
-    </ol>
-  </section>
+      <section id="sd-adapter">
+        <h3>SD Adapter Prep</h3>
+        <p>Disassemble the SD card adapter's plastic enclosure to extract the PCB if required for this build.</p>
 
-  <section id="finishing">
-    <h3>Finishing Steps</h3>
-    <ol class="steps">
-      <li>Add rubber bumpers.</li>
-      <li>Verify system boots + display works.</li>
-    </ol>
-  </section>
+        <ol class="steps">
+          <li>Use a prying tool to carefully open the enclosure.</li>
+          <li>Remove the PCB and set the plastic shells aside (they won't be reused).</li>
+        </ol>
+      </section>
 
-</main>
+      <section id="finishing">
+        <h3>Finishing</h3>
+        <p>Final checks and installing rubber feet.</p>
 
+        <ol class="steps">
+          <li>Attach rubber bumpers to the bottom cover using adhesive.</li>
+          <li>Perform a final test: power on and verify HDMI, USB power, and SD card behavior.</li>
+        </ol>
+      </section>
 
-<footer class="container">
-  <p><small>Structure-only template using Pico.css. Replace placeholders with actual build text/images.</small></p>
-</footer>
+      <footer>
+        <p>Note: This page is a structure-and-style reproduction created with Pico.css. For the original guide (full text, photos, and CAD/downloads) see the Adafruit Learning System entry referenced below.</p>
+        <p><small>Original guide: Adafruit — Mac Classic Fruit Jam (Assembly).</small></p>
+      </footer>
+    </article>
 
+    <!-- aside / sidebar -->
+    <aside>
+      <div class="card">
+        <h4>Quick links</h4>
+        <ul>
+          <li><a href="#parts">Parts</a></li>
+          <li><a href="#prep-hdmi">Prep HDMI</a></li>
+          <li><a href="#usb-c">USB-C</a></li>
+          <li><a href="#secure-display">Display</a></li>
+        </ul>
+      </div>
 
-<!-- ✅ Scroll → Floating Menu -->
-<script>
-  const menu = document.getElementById("mainMenu");
-  const hero = document.querySelector(".hero");
+      <div class="card">
+        <h4>Downloads</h4>
+        <p><a href="#" class="contrast">CAD files</a></p>
+        <p><a href="#" class="contrast">Circuit diagram</a></p>
+      </div>
 
-  const observer = new IntersectionObserver(
-    ([e]) => menu.classList.toggle("floating", !e.isIntersecting),
-    { threshold: 0 }
-  );
-
-  observer.observe(hero);
-</script>
-
+      <div class="card">
+        <h4>Project metadata</h4>
+        <p>Difficulty: Intermediate</p>
+        <p>Estimated time: 1–2 hours</p>
+      </div>
+    </aside>
+  </main>
 </body>
 </html>
