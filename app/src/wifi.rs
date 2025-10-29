@@ -1,4 +1,4 @@
-use std::{collections::HashSet, io, process::Command};
+use std::io;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Connectivity {
@@ -26,7 +26,7 @@ pub fn scan_ssids(iface: &str) -> io::Result<Vec<String>> {
 }
 
 #[cfg(not(feature = "display_hat"))]
-pub fn scan_ssids(iface: &str) -> io::Result<Vec<String>> {
+pub fn scan_ssids(_iface: &str) -> io::Result<Vec<String>> {
     Ok(vec![])
 }
 
@@ -43,6 +43,6 @@ pub async fn add_connection(ssid: &str, password: &str) -> io::Result<()> {
 }
 
 #[cfg(not(feature = "display_hat"))]
-pub async fn add_connection(ssid: &str, password: &str) -> io::Result<()> {
+pub async fn add_connection(_ssid: &str, _password: &str) -> io::Result<()> {
     Ok(())
 }

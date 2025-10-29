@@ -1,5 +1,4 @@
 use crate::screens::Screen;
-use core::panic;
 use ratatui::{
     Frame,
     buffer::Buffer,

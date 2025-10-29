@@ -3,6 +3,10 @@ use mousefood::{
     EmbeddedBackend, EmbeddedBackendConfig, embedded_graphics::geometry, prelude::Rgb565,
 };
 
+// TODO
+// Add input handling support
+// https://github.com/embedded-graphics/simulator/blob/0afacca1728a0498ee76e690873e8715df077159/examples/input-handling.rs
+
 pub fn create_backend() -> EmbeddedBackend<'static, SimulatorDisplay<Rgb565>, Rgb565> {
     let mut simulator_window = Window::new(
         "Simulator",

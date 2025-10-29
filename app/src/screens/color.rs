@@ -2,7 +2,7 @@ use palette::convert::FromColorUnclamped;
 use palette::{Okhsv, Srgb};
 use ratatui::Frame;
 use ratatui::buffer::Buffer;
-use ratatui::layout::{Constraint, Layout, Position, Rect};
+use ratatui::layout::{Position, Rect};
 use ratatui::style::Color;
 use ratatui::text::Text;
 use ratatui::widgets::Widget;
@@ -10,8 +10,6 @@ use std::time::{Duration, Instant};
 
 #[derive(Debug, Default)]
 pub struct ColorScreen {
-    /// A widget that displays the current frames per second
-    fps_widget: FpsWidget,
 
     /// A widget that displays the full range of RGB colors that can be
     /// displayed in the terminal.

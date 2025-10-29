@@ -3,6 +3,7 @@ use amaru_doctor::{
     prometheus::service::MetricsPoller, tui::Tui,
 };
 use amaru_kernel::network::NetworkName;
+#[cfg(feature = "display_hat")]
 use amaru_pi::backends::display_hat;
 use anyhow::Result;
 use std::{path::PathBuf, time::Duration};
@@ -18,6 +19,8 @@ async fn main() -> Result<()> {
         MetricsPoller::new("http://0.0.0.0:8889/metrics", Duration::from_millis(100));
     let metrics_handle = metrics_service.start();
 
+    #[cfg(feature = "display_hat")]
+    {
     let (backend, button_events) = display_hat::setup_hardware_and_input()?;
 
     let mut tui = Tui::new(backend)?;
@@ -37,6 +40,7 @@ async fn main() -> Result<()> {
         tui.get_frame().area(),
     )?;
     app.run(&mut tui).await?;
+    }
 
     Ok(())
 }

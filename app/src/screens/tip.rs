@@ -1,21 +1,12 @@
-use amaru_doctor::model::otel_view::OtelViewState;
-use amaru_doctor::model::prom_metrics::PromMetricsViewState;
-use amaru_doctor::otel::TraceGraphSnapshot;
-use amaru_doctor::otel::service::OtelCollectorService;
-use amaru_doctor::prometheus::model::Timestamp;
-use amaru_doctor::prometheus::service::{MetricsPoller, MetricsPollerHandle};
 use amaru_kernel::Slot;
 use ratatui::Frame;
-use ratatui::layout::{Alignment, Constraint, Direction, Layout, Rect};
-use ratatui::style::{Color, Modifier, Style, Stylize};
-use ratatui::symbols::{self, Marker};
-use ratatui::text::{Line, Span};
-use ratatui::widgets::{Axis, Block, Chart, Dataset, GraphType, LegendPosition, Paragraph, Wrap};
+use ratatui::layout::{Constraint, Direction, Layout};
+use ratatui::style::Stylize;
+use ratatui::text::Line;
 use std::io::BufRead;
 use std::io::BufReader;
 use std::process::{Command, Stdio};
 use std::time::{Duration, Instant};
-use tokio::task::JoinHandle;
 use tui_big_text::{BigText, PixelSize};
 
 use crate::logs::extract_tip_changed;
@@ -101,7 +92,7 @@ impl JournalReader {
 }
 
 impl crate::screens::Screen for TipScreen {
-    fn display(&mut self, duration: Duration, frame: &mut Frame) {
+    fn display(&mut self, _duration: Duration, frame: &mut Frame) {
         let now = Instant::now();
         if now - self.last_refresh > Duration::from_secs(1) {
             self.last_refresh = now;
