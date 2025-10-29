@@ -3,22 +3,17 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Amaru PI</title>
+  <meta name="color-scheme" content="light dark">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+  <title>Amaru PI</title>
   <style>
-    iframe {
-      width: 100%;
-      height: 500px;
-      border: 1px solid #ccc;
-      margin-top: 1rem;
-    }
+    iframe { width: 100%; height: 100vh; border: 0; }
     header { display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.5rem; }
-    nav ul { list-style: none; display: flex; gap: 1rem; margin: 0; padding: 0; }
-    nav a { cursor: pointer; text-decoration: none; padding: 0.5rem 0.75rem; border-radius: 0; }
-    nav a.active { border-bottom: 2px solid var(--pico-primary); }
-    main { padding: 1.25rem; }
-    iframe { border: 0; }
-    li a[aria-disabled=true] { color: gray; }
+    header a { text-decoration: none; }
+    header nav ul { list-style: none; display: flex; gap: 1rem; margin: 0; padding: 0; }
+    header nav ul li a { cursor: pointer; text-decoration: none; padding: 0.5rem 0.75rem; border-radius: 0; }
+    header nav ul li a.active { border-bottom: 2px solid var(--pico-primary); }
+    header nav ul li a[aria-disabled=true] { color: gray; }
   </style>
 </head>
 <body>
@@ -31,25 +26,32 @@
   </header>
 
   <main>
-    <iframe id="content-frame" src=""></iframe>
+    <iframe id="content-frame"></iframe>
   </main>
 
   <script>
-    function loadPage(link, page) {
-      // Do nothing if link is already active
-      if (link && link.classList.contains('active')) {
-        return;
-      }
+    function loadLinkedPage(link, page) {
+        // Do nothing if link is already active
+        if (link.classList.contains('active')) {
+          return;
+        }
 
+        loadPage(page);
+
+        // Update active link
+        link.classList.add('active');
+    }
+
+    function loadPage(page) {
       const iframe = document.getElementById('content-frame');
       const url = `${page}?_=${Date.now()}`; // Cache buster, make sure page is always loaded fresh
       iframe.src = url;
 
       // Clear active state from all links
       document.querySelectorAll('nav a').forEach(a => a.classList.remove('active'));
-      // Update active link
-      link && link.classList.add('active');
     }
+
+    function loadErrorPage() { loadPage('error.html') }
 
     function loadPageFromLocationHashOrDefault() {
         // Read page=XXX from location.hash
@@ -59,23 +61,18 @@
             const page = Object.values(pages).find(p => p.page === `${hashPage}.html`);
             const link = [...document.querySelectorAll('nav a')].find(a => a.dataset.page === `${hashPage}.html`);
             if (link && !page.disabled) {
-                loadPage(link, link.dataset.page);
+                loadLinkedPage(link, link.dataset.page);
             } else {
-                loadPage(null, 'error.html');
+                loadErrorPage();
             }
         } else {
-            const firstLink = document.querySelector('nav a:not([aria-disabled="true"])');
-            if (firstLink) {
-                loadPage(firstLink, firstLink.dataset.page);
-            } else {
-                loadPage(null, 'error.html');
-            }
+            loadPage('main.html')
         }
     }
 
     const pages = {
       'Main': {page: 'main.html', hidden: true},
-      'Getting started': {page: 'getting-started.html'},
+      'Getting started': {page: 'getting-started.html', disabled: true},
       'Build': {page: 'build.html', disabled: true},
       'App': {page: 'app.html', disabled: true},
       'Claim': {page: 'claim.html', disabled: true},
@@ -85,6 +82,7 @@
         const navList = document.querySelector('header nav ul');
         navList.innerHTML = '';
 
+        // Append li elements to the header from `pages`
         Object.entries(pages).filter(([_, value]) => !value.hidden).forEach(([title, value]) => {
             const li = document.createElement('li');
             const a = document.createElement('a');
@@ -97,7 +95,7 @@
                 e.preventDefault();
                 if (!value.disabled) {
                   history.pushState(null, '', `#page=${value.page.replace('.html', '')}`);
-                  loadPage(a, value.page);
+                  loadLinkedPage(a, value.page);
                 }
             };
 
