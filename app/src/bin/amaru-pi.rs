@@ -71,7 +71,7 @@ async fn main() -> Result<()> {
 
     let mut terminal = Terminal::new(backend).unwrap();
 
-    let current_screen = CurrentScreen::Tip;
+    let mut current_screen = CurrentScreen::Tip;
 
     let startup = Instant::now();
     let mut last_frame = Instant::now();
