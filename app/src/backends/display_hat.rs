@@ -1,3 +1,4 @@
+use crate::backends::Backend;
 use crate::input::InputHandler;
 use amaru_doctor::model::button::{ButtonId, InputEvent};
 use anyhow::Result;
@@ -40,10 +41,13 @@ impl embedded_hal::digital::ErrorType for NoCs {
 }
 
 type EbSpi = SpiInterface<'static, ExclusiveDevice<Spi, NoCs, NoDelay>, OutputPin>;
-type Backend = EmbeddedBackend<'static, Display<EbSpi, ST7789, NoResetPin>, Rgb565>;
 
 /// Initializes the display, GPIO, and the input handler thread.
-pub fn setup_hardware_and_input() -> Result<(Backend, Receiver<InputEvent>)> {
+pub fn setup_hardware_and_input() -> Result<(
+    Backend<Display<EbSpi, ST7789, NoResetPin>>,
+    Receiver<InputEvent>,
+)> {
+    println!("Setting up display_hat hardware and input");
     let gpio = Gpio::new()?;
     let dc = gpio.get(SPI_DC)?.into_output();
     let mut backlight = gpio.get(BACKLIGHT)?.into_output();

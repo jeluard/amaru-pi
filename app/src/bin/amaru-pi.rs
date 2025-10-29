@@ -1,11 +1,11 @@
+use amaru_doctor::model::button::{ButtonId, ButtonPress};
 use amaru_pi::backends;
 use amaru_pi::screens::Screen;
 use amaru_pi::screens::color::ColorScreen;
-use amaru_pi::screens::exit::ExitScreen;
 use amaru_pi::screens::logo::LogoScreen;
-use amaru_pi::screens::metrics::MetricsScreen;
 use amaru_pi::screens::scan::ScanScreen;
 use amaru_pi::screens::tip::TipScreen;
+use amaru_pi::screens::wifi_settings::WiFiSettingsScreen;
 use anyhow::Result;
 use ratatui::prelude::*;
 use std::sync::Arc;
@@ -18,36 +18,17 @@ use std::time::{Duration, Instant};
 
 #[derive(PartialEq, Clone, Copy)]
 enum CurrentScreen {
-    Chart,
     Scan,
-    Color,
+    WiFiSettings,
     Tip,
-    Exit,
-}
-const SCREEN_ORDER: [CurrentScreen; 4] = [
-    CurrentScreen::Tip,
-    CurrentScreen::Chart,
-    CurrentScreen::Color,
-    CurrentScreen::Scan,
-];
-
-fn next_screen(current: CurrentScreen) -> CurrentScreen {
-    // Find the current index in SCREEN_ORDER
-    if let Some(idx) = SCREEN_ORDER.iter().position(|&s| s == current) {
-        // Return the next item, wrapping around
-        let next_idx = (idx + 1) % SCREEN_ORDER.len();
-        SCREEN_ORDER[next_idx]
-    } else {
-        // If not found, return the first one or Exit as a fallback
-        SCREEN_ORDER[0]
-    }
+    Color,
 }
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    println!("Starting amaru-pi");
     let splash_duration = Duration::from_millis(5000);
     let mut logo = LogoScreen::new(Duration::from_millis(2000), splash_duration);
-    let mut chart_screen = MetricsScreen::default();
     /*let mut chart_screen = Arc::new(Mutex::new(MetricsScreen::default()));
             let value = chart_screen.clone();
             tokio::spawn(async move {
@@ -61,54 +42,68 @@ async fn main() -> Result<()> {
     let mut tip_screen = TipScreen::default();
     let mut color_screen = ColorScreen::default();
     let mut scan_screen = ScanScreen::default();
-    let mut exit_screen = ExitScreen::new();
+    let mut wifi_screen = WiFiSettingsScreen::default();
 
     #[cfg(feature = "display_hat")]
     let (backend, input_rx) = backends::display_hat::setup_hardware_and_input()?;
 
     #[cfg(feature = "simulator")]
-    let backend = backends::simulator::create_backend();
+    let (backend, input_rx) = backends::simulator::setup_simulator_and_input();
 
     let mut terminal = Terminal::new(backend).unwrap();
-
     let mut current_screen = CurrentScreen::Tip;
 
     let startup = Instant::now();
-    let mut last_frame = Instant::now();
-    let running = Arc::new(AtomicBool::new(true));
+    let mut last_loop = Instant::now();
 
+    let running = Arc::new(AtomicBool::new(true));
     while running.load(Ordering::SeqCst) {
-        let elapsed = last_frame.elapsed();
-        last_frame = Instant::now();
+        let elapsed = last_loop.elapsed();
+        last_loop = Instant::now();
         let show_first = startup.elapsed() < splash_duration;
 
-        #[cfg(feature = "display_hat")]
-        {
-            // Non-blocking check for button press
-            if let Ok(event) = input_rx.try_recv() {
-                // Button press detected
+        if let Ok(event) = input_rx.try_recv() {
+            match current_screen {
+                CurrentScreen::WiFiSettings => {
+                    // Let the wifi screen handle input outside of the other screens
+                    wifi_screen.handle_input(event);
 
-                use amaru_doctor::model::button::{ButtonId, ButtonPress};
-                match (event.id, event.press_type) {
-                    // A exits
-                    (ButtonId::A, _) => {
-                        println!("Button A pressed. Exiting...");
-                        current_screen = CurrentScreen::Exit;
+                    if !wifi_screen.is_keyboard_active()
+                        && let (ButtonId::A, ButtonPress::Short) = (event.id, event.press_type)
+                    {
+                        // The wifi screen keyboard isn't active and A was pressed
+                        println!("Button A pressed. Switching screen...");
+                        current_screen = CurrentScreen::Tip;
                     }
-                    // B cyles screens
-                    (ButtonId::B, ButtonPress::Short) => {
-                        println!("Button B pressed. Switching screen...");
-                        current_screen = next_screen(current_screen);
+                }
+                _ => {
+                    match (event.id, event.press_type) {
+                        // A switches screens
+                        (ButtonId::A, _) => {
+                            println!("Button A pressed. Switching screen...");
+                            current_screen = match current_screen {
+                                CurrentScreen::Scan => CurrentScreen::WiFiSettings,
+                                // Handled above
+                                CurrentScreen::WiFiSettings => unreachable!(),
+                                CurrentScreen::Tip => CurrentScreen::Color,
+                                CurrentScreen::Color => CurrentScreen::Scan,
+                            };
+                        }
+                        // B exits
+                        (ButtonId::B, ButtonPress::Short) => {
+                            println!("Button B pressed. Exiting...");
+                            running.store(false, Ordering::SeqCst);
+                        }
+                        // Other buttons
+                        (ButtonId::X, _) => {
+                            println!("Button X pressed: {:?}", event.press_type);
+                        }
+                        (ButtonId::Y, _) => {
+                            println!("Button Y pressed: {:?}", event.press_type);
+                        }
+                        // Ignore other press types
+                        _ => {}
                     }
-                    // Other buttons
-                    (ButtonId::X, _) => {
-                        println!("Button X pressed: {:?}", event.press_type);
-                    }
-                    (ButtonId::Y, _) => {
-                        println!("Button Y pressed: {:?}", event.press_type);
-                    }
-                    // Ignore other press types
-                    _ => {}
                 }
             }
         }
@@ -118,18 +113,14 @@ async fn main() -> Result<()> {
                 logo.display(elapsed, frame);
             } else {
                 match current_screen {
+                    CurrentScreen::WiFiSettings => wifi_screen.display(elapsed, frame),
                     CurrentScreen::Tip => tip_screen.display(elapsed, frame),
-                    CurrentScreen::Chart => chart_screen.display(elapsed, frame),
+                    // CurrentScreen::Chart => chart_screen.display(elapsed, frame),
                     CurrentScreen::Color => color_screen.display(elapsed, frame),
                     CurrentScreen::Scan => scan_screen.display(elapsed, frame),
-                    CurrentScreen::Exit => exit_screen.display(elapsed, frame),
                 }
             }
         })?;
-
-        if matches!(current_screen, CurrentScreen::Exit) && exit_screen.is_finished() {
-            running.store(false, Ordering::SeqCst);
-        }
     }
 
     Ok(())
