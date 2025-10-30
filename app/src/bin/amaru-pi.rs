@@ -72,7 +72,6 @@ async fn main() -> Result<()> {
                         && let (ButtonId::A, ButtonPress::Short) = (event.id, event.press_type)
                     {
                         // The wifi screen keyboard isn't active and A was pressed
-                        println!("Button A pressed. Switching screen...");
                         current_screen = CurrentScreen::Tip;
                     }
                 }
@@ -80,7 +79,6 @@ async fn main() -> Result<()> {
                     match (event.id, event.press_type) {
                         // A switches screens
                         (ButtonId::A, _) => {
-                            println!("Button A pressed. Switching screen...");
                             current_screen = match current_screen {
                                 CurrentScreen::Scan => CurrentScreen::WiFiSettings,
                                 // Handled above
@@ -91,16 +89,11 @@ async fn main() -> Result<()> {
                         }
                         // B exits
                         (ButtonId::B, ButtonPress::Short) => {
-                            println!("Button B pressed. Exiting...");
                             running.store(false, Ordering::SeqCst);
                         }
                         // Other buttons
-                        (ButtonId::X, _) => {
-                            println!("Button X pressed: {:?}", event.press_type);
-                        }
-                        (ButtonId::Y, _) => {
-                            println!("Button Y pressed: {:?}", event.press_type);
-                        }
+                        (ButtonId::X, _) => {}
+                        (ButtonId::Y, _) => {}
                         // Ignore other press types
                         _ => {}
                     }

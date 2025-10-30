@@ -3,13 +3,10 @@ use ratatui::Frame;
 use ratatui::layout::{Constraint, Direction, Layout};
 use ratatui::style::Stylize;
 use ratatui::text::Line;
-use std::io::BufRead;
-use std::io::BufReader;
-use std::process::{Command, Stdio};
 use std::time::{Duration, Instant};
 use tui_big_text::{BigText, PixelSize};
 
-use crate::logs::extract_tip_changed;
+use crate::logs::{JournalReader, extract_tip_changed};
 
 pub struct TipScreen {
     reader: JournalReader,
@@ -34,69 +31,12 @@ impl Default for TipScreen {
     }
 }
 
-pub struct JournalReader {
-    service: String,
-    last_cursor: Option<String>,
-}
-
-impl JournalReader {
-    pub fn new(service: impl Into<String>) -> Self {
-        Self {
-            service: service.into(),
-            last_cursor: None,
-        }
-    }
-
-    pub fn read_logs(&mut self) -> anyhow::Result<Vec<String>> {
-        let mut cmd = Command::new("journalctl");
-        cmd.arg("-u")
-            .arg(&self.service)
-            .arg("--output=short-iso")
-            .arg("--show-cursor")
-            .arg("--no-pager");
-
-        if let Some(ref cursor) = self.last_cursor {
-            cmd.arg("--after-cursor").arg(cursor);
-        } else {
-            cmd.arg("--since").arg("1 minute ago");
-        }
-
-        let mut child = cmd
-            .stdout(Stdio::piped())
-            .stderr(Stdio::null())
-            .spawn()
-            .expect("failed to spawn journalctl");
-
-        let stdout = child.stdout.take().unwrap();
-        let reader = BufReader::new(stdout);
-
-        let mut logs = Vec::new();
-        let mut last_cursor = None;
-
-        for line_result in reader.lines() {
-            let line = line_result?;
-            if line.starts_with("-- cursor:") {
-                last_cursor = Some(line.trim_start_matches("-- cursor:").trim().to_string());
-            } else {
-                logs.push(line);
-            }
-        }
-
-        if let Some(cursor) = last_cursor {
-            self.last_cursor = Some(cursor);
-        }
-
-        let _ = child.wait()?;
-        Ok(logs)
-    }
-}
-
 impl crate::screens::Screen for TipScreen {
     fn display(&mut self, _duration: Duration, frame: &mut Frame) {
         let now = Instant::now();
         if now - self.last_refresh > Duration::from_secs(1) {
             self.last_refresh = now;
-            let lines = self.reader.read_logs().unwrap_or_default();
+            let lines = self.reader.next_lines().unwrap_or_default();
             let tips: Vec<_> = lines
                 .iter()
                 .flat_map(|line| extract_tip_changed(line))

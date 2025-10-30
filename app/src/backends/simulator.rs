@@ -40,7 +40,8 @@ pub fn setup_simulator_and_input() -> (Backend<SimulatorDisplay<Rgb565>>, Receiv
     (backend, rx)
 }
 
-/// Checks if a pending press has timed out and sends a `Short` press event if it has.
+/// Checks if a pending press has timed out and sends a `Short` press event if
+/// it has.
 fn handle_pending_press_timeout(pending_press: &mut PendingPress, tx: &Sender<InputEvent>) {
     let Some((id, instant)) = pending_press else {
         // No pending press
