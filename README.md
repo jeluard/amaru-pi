@@ -68,7 +68,4 @@ export SSH_HOST=`pi@pi.local`
 
 # You need to unplug the SD card and be prepared to plug it to your local machine
 ./scripts/dump-image.sh
-
-# Configure the image to adapt for one machine
-./scripts/configure-image.sh
 ```
