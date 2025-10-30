@@ -1,5 +1,5 @@
 use crate::backends::Backend;
-use amaru_doctor::model::button::{ButtonId, ButtonPress, InputEvent};
+use crate::button::{ButtonId, ButtonPress, InputEvent};
 use embedded_graphics_simulator::sdl2::Keycode;
 use embedded_graphics_simulator::{OutputSettings, SimulatorDisplay, SimulatorEvent, Window};
 use mousefood::embedded_graphics::geometry::Size;

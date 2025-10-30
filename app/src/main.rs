@@ -1,5 +1,5 @@
-use amaru_doctor::model::button::{ButtonId, ButtonPress};
 use amaru_pi::backends;
+use amaru_pi::button::{ButtonId, ButtonPress};
 use amaru_pi::screens::Screen;
 use amaru_pi::screens::color::ColorScreen;
 use amaru_pi::screens::logo::LogoScreen;

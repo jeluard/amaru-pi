@@ -1,6 +1,6 @@
 use super::{ActiveField, Focus, WiFiSettingsScreen};
+use crate::button::{ButtonId, ButtonPress, InputEvent};
 use crate::keyboard::{KeyboardAction, KeyboardContext};
-use amaru_doctor::model::button::{ButtonId, ButtonPress, InputEvent};
 
 impl WiFiSettingsScreen {
     pub fn is_keyboard_active(&self) -> bool {

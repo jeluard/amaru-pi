@@ -1,5 +1,4 @@
-use crate::button::Button;
-use amaru_doctor::model::button::{ButtonId, InputEvent};
+use crate::button::{Button, ButtonId, InputEvent};
 use anyhow::Result;
 use rppal::gpio::InputPin;
 use std::{

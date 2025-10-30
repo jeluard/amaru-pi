@@ -1,6 +1,6 @@
 use super::{KeyboardAction, KeyboardMode, KeyboardWidget};
+use crate::button::{ButtonId, ButtonPress, InputEvent};
 use crate::keyboard::layout::KEYBOARD_LAYOUT;
-use amaru_doctor::model::button::{ButtonId, ButtonPress, InputEvent};
 
 impl KeyboardWidget {
     /// Handles button presses and returns an optional action.

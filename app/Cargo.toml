@@ -6,7 +6,6 @@ default-run = "amaru-pi"
 
 [dependencies]
 amaru-kernel = { git = "https://github.com/pragma-org/amaru" }
-amaru-doctor = { git = "https://github.com/jeluard/amaru-doctor" }
 tui-qrcode = { git = "https://github.com/jeluard/tui-widgets", branch = "jeluard/upgrade-ratatui"}
 tui-big-text = { git = "https://github.com/jeluard/tui-widgets", branch = "jeluard/upgrade-ratatui"}
 mousefood = { git = "https://github.com/j-g00da/mousefood", features = ["framebuffer"] }
@@ -22,13 +21,6 @@ tokio = { version = "1.47.1", features = ["full"] }
 tachyonfx = { git = "https://github.com/junkdog/tachyonfx", branch = "ratatui-0.30-preview" }
 qrcode = "0.14.1"
 indoc = "2.0.6"
-signal-hook = "0.3.18"
-#linux-embedded-hal = {version = "0.4.0", features = ["spi"], optional = true }
-#spidev = {version = "0.7.0", optional = true }
-#bluer = { version = "0.17.4", features = ["bluetoothd"] }
-#bluer = { version = "0.17.4" }
-#zbus = "5.11.0"
-#futures = "0.3.31"
 anyhow = "1.0.100"
 opentelemetry-proto = "0.30.0"
 axum = "0.7"
@@ -37,14 +29,9 @@ prost = "0.13"
 serde_json = "1.0.145"
 serde = "1.0.228"
 
-[dependencies.sdl2]
-version = "0.38"
-features = ["bundled"]
-
 [features]
 default = ["simulator"]
 simulator = ["embedded-graphics-simulator"]
-#display_hat = ["mipidsi", "spidev", "linux-embedded-hal", "embedded-hal-bus", "embedded-hal"]
 display_hat = ["mipidsi", "rppal", "embedded-hal-bus", "embedded-hal"]
 
 [workspace]

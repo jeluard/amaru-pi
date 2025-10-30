@@ -1,13 +1,12 @@
 use crate::backends::Backend;
+use crate::button::{ButtonId, InputEvent};
 use crate::input::InputHandler;
-use amaru_doctor::model::button::{ButtonId, InputEvent};
 use anyhow::Result;
 use embedded_hal_bus::spi::{ExclusiveDevice, NoDelay};
 use mipidsi::interface::SpiInterface;
 use mipidsi::models::ST7789;
 use mipidsi::options::{ColorInversion, Orientation, Rotation};
 use mipidsi::{Builder, Display, NoResetPin};
-use mousefood::prelude::Rgb565;
 use mousefood::{EmbeddedBackend, EmbeddedBackendConfig};
 use rppal::gpio::{Gpio, OutputPin};
 use rppal::hal::Delay;

@@ -1,9 +1,33 @@
-use amaru_doctor::model::button::ButtonPress;
 use std::time::{Duration, Instant};
 
 const DEBOUNCE: Duration = Duration::from_millis(50);
 const LONG_PRESS: Duration = Duration::from_millis(1000);
 const DOUBLE_PRESS: Duration = Duration::from_millis(400);
+
+/// Display HAT Mini button names
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum ButtonId {
+    A,
+    B,
+    X,
+    Y,
+}
+
+/// Type of button press
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ButtonPress {
+    Short,
+    Long,
+    Double,
+}
+
+/// The button pressed and the type of press
+#[derive(Debug, Clone, Copy)]
+pub struct InputEvent {
+    pub id: ButtonId,
+    pub press_type: ButtonPress,
+}
+
 pub struct Button {
     pressed: bool,
     last_change: Instant,

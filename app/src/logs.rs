@@ -17,11 +17,19 @@ struct Fields {
 }
 
 pub struct JournalReader {
+    #[cfg(feature = "display_hat")]
     service: String,
+    #[cfg(feature = "display_hat")]
     last_cursor: Option<String>,
 }
 
 impl JournalReader {
+    #[cfg(not(feature = "display_hat"))]
+    pub fn new(_service: impl Into<String>) -> Self {
+        Self {}
+    }
+
+    #[cfg(feature = "display_hat")]
     pub fn new(service: impl Into<String>) -> Self {
         Self {
             service: service.into(),
@@ -82,12 +90,11 @@ impl JournalReader {
 pub fn extract_tip_changed(line: &str) -> Option<u64> {
     let json_part = line.find('{').map(|i| &line[i..])?;
     let entry: LogEntry = serde_json::from_str(json_part).ok()?;
-    if entry.fields.message == "tip_changed" {
-        if let Some(tip) = entry.fields.tip {
-            if let Some(slot_str) = tip.split('.').next() {
-                return slot_str.parse::<u64>().ok();
-            }
-        }
+    if entry.fields.message == "tip_changed"
+        && let Some(tip) = entry.fields.tip
+        && let Some(slot_str) = tip.split('.').next()
+    {
+        return slot_str.parse::<u64>().ok();
     }
     None
 }
