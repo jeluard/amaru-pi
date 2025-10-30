@@ -10,7 +10,6 @@ use std::time::{Duration, Instant};
 
 #[derive(Debug, Default)]
 pub struct ColorScreen {
-
     /// A widget that displays the full range of RGB colors that can be
     /// displayed in the terminal.
     colors_widget: ColorsWidget,

@@ -1,8 +1,10 @@
 A collection of details and scripts to run [amaru](https://github.com/pragma-org/amaru) on Raspberry Pis.
 
-# Build
+# Amaru
 
-## On RPI
+## Build
+
+### On RPI
 
 Building directly on the real machine is always an option but might require [tweaks](#tweaks) and time!
 
@@ -13,7 +15,7 @@ sudo apt install -y libclang-dev
 cargo build --release # 1 hour on RPI5
 ```
 
-## Cross building
+### Cross building
 
 Cross building allow to pre-create binaries for RPI on different (more powerful) machine with different architecture.
 Note that cross-building is probably better on a linux environment.
@@ -22,7 +24,7 @@ Note that cross-building is probably better on a linux environment.
 cross build --target=aarch64-unknown-linux-musl --release
 ```
 
-# Running
+## Run
 
 Regular `amaru` commands can be used to run on an RPI. Note that it's probably a good idea to start with a fresh amaru db. Running `bootstrap` (to start from a `cardano-node` snapshot) will either be pretty slow or crash (on Pi zero).
 
@@ -48,4 +50,25 @@ sudo vi /etc/dphys-swapfile
 # edit `CONF_SWAPSIZE=100` to `CONF_SWAPSIZE=1024`
 sudo dphys-swapfile setup
 sudo dphys-swapfile swapon
+```
+
+# Create the SD image
+
+`overlays` contains all the file that will be added on top of a regular PIOS distribution.
+Make sure you have a PI running with your PIOS distribution of choice accessible over ssh (via env var `SSH_HOST`).
+
+```shell
+export SSH_HOST=`pi@pi.local`
+
+# Build all the files that will end up in the image (binaries, amaru dbs, ...)
+./scripts/build-assets.sh
+
+# Sync all files to a running PI
+./scripts/sync-overlays.sh
+
+# You need to unplug the SD card and be prepared to plug it to your local machine
+./scripts/dump-image.sh
+
+# Configure the image to adapt for one machine
+./scripts/configure-image.sh
 ```
