@@ -1,5 +1,5 @@
 run-simulator:
-	[ "$$(uname)" = "Darwin" ] && export LIBRARY_PATH="$${LIBRARY_PATH}:$$(brew --prefix)/lib"; cargo run
+	[ "$$(uname)" = "Darwin" ] && export LIBRARY_PATH="$${LIBRARY_PATH}:$$(brew --prefix)/lib"
 	cargo run
 
 build:

@@ -6,3 +6,4 @@ pub mod input;
 pub mod keyboard;
 pub mod logs;
 pub mod screens;
+pub mod wifi;
