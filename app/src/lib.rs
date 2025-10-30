@@ -3,6 +3,6 @@ pub mod backends;
 pub mod button;
 #[cfg(feature = "display_hat")]
 pub mod input;
+pub mod keyboard;
 pub mod logs;
 pub mod screens;
-pub mod wifi;
