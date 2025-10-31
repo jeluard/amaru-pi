@@ -1,9 +1,10 @@
 pub mod backends;
-//pub mod bluetooth;
 pub mod button;
+pub mod cli;
 #[cfg(feature = "display_hat")]
 pub mod input;
 pub mod keyboard;
 pub mod logs;
 pub mod screens;
+pub mod tui;
 pub mod wifi;

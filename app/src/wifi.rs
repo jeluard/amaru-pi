@@ -159,7 +159,7 @@ pub fn scan_ssids() -> anyhow::Result<Vec<String>> {
 const CONNECTION_NAME: &str = "mobile";
 
 #[cfg(feature = "display_hat")]
-pub async fn add_connection(ssid: &str, password: &str) -> anyhow::Result<()> {
+pub async fn set_connection(ssid: &str, password: &str) -> anyhow::Result<()> {
     run_and_capture(
         "sudo",
         [
@@ -198,7 +198,7 @@ pub async fn add_connection(ssid: &str, password: &str) -> anyhow::Result<()> {
 }
 
 #[cfg(not(feature = "display_hat"))]
-pub async fn add_connection(_ssid: &str, _password: &str) -> anyhow::Result<()> {
+pub async fn set_connection(_ssid: &str, _password: &str) -> anyhow::Result<()> {
     Ok(())
 }
 
