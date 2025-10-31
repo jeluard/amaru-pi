@@ -43,5 +43,6 @@ jobs:
         uses: ncipollo/release-action@v1
         with:
           artifacts: "${{ env.ARCHIVE_PATH }}"
-          generateReleaseNotes: true
           token: ${{ secrets.GITHUB_TOKEN }}
+          generateReleaseNotes: true
+          immutableCreate: true
