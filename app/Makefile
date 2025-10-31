@@ -1,5 +1,9 @@
+run-simulator: export LIBRARY_PATH := $(LIBRARY_PATH)
+ifeq ($(shell uname),Darwin)
+run-simulator: export LIBRARY_PATH := $(LIBRARY_PATH):$(shell brew --prefix)/lib
+endif
+
 run-simulator:
-	[ "$$(uname)" = "Darwin" ] && export LIBRARY_PATH="$${LIBRARY_PATH}:$$(brew --prefix)/lib"
 	cargo run
 
 build:
