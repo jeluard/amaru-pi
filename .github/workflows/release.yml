@@ -39,10 +39,13 @@ jobs:
           tar -czf "${ARCHIVE_NAME}" -C "${TARGET_DIR}" "${BINARY_NAME}"
           echo "ARCHIVE_PATH=${ARCHIVE_NAME}" >> $GITHUB_ENV
 
+      - name: Generate Checksum
+        run: sha256sum ${{ env.ARCHIVE_PATH }} > checksums.txt
+
       - name: Create Release
         uses: ncipollo/release-action@v1
         with:
-          artifacts: "${{ env.ARCHIVE_PATH }}"
+          artifacts: "${{ env.ARCHIVE_PATH }},checksums.txt"
           token: ${{ secrets.GITHUB_TOKEN }}
           generateReleaseNotes: true
           immutableCreate: true
