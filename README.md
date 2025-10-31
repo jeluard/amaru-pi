@@ -55,10 +55,10 @@ sudo dphys-swapfile swapon
 # Create the SD image
 
 `overlays` contains all the file that will be added on top of a regular PIOS distribution.
-Make sure you have a PI running with your PIOS distribution of choice accessible over ssh (via env var `SSH_HOST`).
+Make sure you have a PI running with your PIOS distribution of choice accessible over ssh (via env var `SSH_REMOTE`).
 
 ```shell
-export SSH_HOST=`pi@pi.local`
+export SSH_REMOTE=`pi@pi.local`
 
 # Build all the files that will end up in the image (binaries, amaru dbs, ...)
 ./scripts/build-assets.sh
@@ -68,4 +68,11 @@ export SSH_HOST=`pi@pi.local`
 
 # You need to unplug the SD card and be prepared to plug it to your local machine
 ./scripts/dump-image.sh
+
+# Then flash the image on a new SD card
+# You can now start your PI with the new card
+
+# Finally configure your running PI with instance specifics info
+export AMARU_WORDS="turtle-red-car"
+./scripts/configure-pi.sh
 ```

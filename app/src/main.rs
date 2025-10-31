@@ -29,16 +29,6 @@ async fn main() -> Result<()> {
     println!("Starting amaru-pi");
     let splash_duration = Duration::from_millis(5000);
     let mut logo = LogoScreen::new(Duration::from_millis(2000), splash_duration);
-    /*let mut chart_screen = Arc::new(Mutex::new(MetricsScreen::default()));
-            let value = chart_screen.clone();
-            tokio::spawn(async move {
-                let value = value.clone();
-                async move {
-                    let mut value = value.lock().await; // async lock
-                    value.start().await;                // works fine!
-                }
-            });
-    */
     let mut tip_screen = TipScreen::default();
     let mut color_screen = ColorScreen::default();
     let mut scan_screen = ScanScreen::default();
