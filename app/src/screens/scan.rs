@@ -28,7 +28,7 @@ impl crate::screens::Screen for ScanScreen {
             .areas(top_area);
 
         let base_url = "https://jeluard.github.io/amaru-pi/#page=app";
-        let url = match env::var("AMARU_PI_WORDS") {
+        let url = match env::var("AMARU_WORDS") {
             Ok(words) if !words.is_empty() => format!("{}?words={}", base_url, words),
             _ => base_url.to_string(),
         };
