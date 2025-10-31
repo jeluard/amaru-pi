@@ -23,11 +23,13 @@ jobs:
         with:
           toolchain: stable
           override: true
+      
+      - name: Install linker
+        run: sudo apt-get update && sudo apt-get install -y gcc-aarch64-linux-gnu
 
       - name: Build binary
         run: cd app && make build
 
-      # `github.ref_name` contains the tag (e.g., "v1.0.0")
       - name: Package binary
         run: |
           BINARY_NAME="amaru-pi"
