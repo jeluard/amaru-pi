@@ -5,9 +5,6 @@ set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-#./setup/system.sh
-#./setup/hostname.sh
-#./setup/displayhatmini_workaround.sh # TODO remove once amaru-pi is self-contained
 ${SCRIPT_DIR}/setup/lean.sh
 ${SCRIPT_DIR}/setup/ssh.sh
 ${SCRIPT_DIR}/setup/py-displayhatmini.sh
