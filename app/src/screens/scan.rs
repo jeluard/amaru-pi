@@ -14,11 +14,11 @@ pub struct ScanScreen {}
 
 impl crate::screens::Screen for ScanScreen {
     fn display(&mut self, _duration: Duration, frame: &mut Frame) {
-        let [_, top_area, _, bottom_area] = Layout::vertical([
+        let [_, top_area, bottom_area, _] = Layout::vertical([
             Constraint::Percentage(5),
-            Constraint::Percentage(80),
+            Constraint::Percentage(85),
             Constraint::Percentage(5),
-            Constraint::Percentage(10),
+            Constraint::Percentage(5),
         ])
         .flex(Flex::Center)
         .areas(frame.area());
