@@ -6,5 +6,6 @@ pub mod input;
 pub mod keyboard;
 pub mod logs;
 pub mod screens;
+pub mod systemd;
 pub mod tui;
 pub mod wifi;
