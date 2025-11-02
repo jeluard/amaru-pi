@@ -60,19 +60,28 @@ Make sure you have a PI running with your PIOS distribution of choice accessible
 ```shell
 export SSH_REMOTE=`pi@pi.local`
 
-# Build all the files that will end up in the image (binaries, amaru dbs, ...)
+# First create the main SD card image that will be flashed on all devices
+
+## Build all the files that will end up in the image (binaries, amaru dbs, ...)
 ./scripts/build-assets.sh
 
-# Sync all files to a running PI
-./scripts/sync-overlays.sh
+## Setup the remote PI (sync all configuration files, binaries, etc)
+./scripts/setup.sh
 
-# You need to unplug the SD card and be prepared to plug it to your local machine
+## Dump the SD card content to a local file
+## You need to unplug the SD card and be prepared to plug it to your local machine
 ./scripts/dump-image.sh
 
-# Then flash the image on a new SD card
-# You can now start your PI with the new card
+## Then flash the image on a new SD card
+## You can now start your PI with the new card
 
-# Finally configure your running PI with instance specifics info
+
+# Optionnally configure your running PI with device specifics info (wifi, claim words, ...)
+
 export AMARU_WORDS="turtle-red-car"
-./scripts/configure-pi.sh
+export AMARU_SSID_NAME="my-wifi"
+export AMARU_SSID_PASSWORD="password"
+./scripts/configure.sh
+
+# Alternatively if you don't need to build an image, you can just call `configure.sh` right after `setup.sh`
 ```
