@@ -8,6 +8,8 @@ use ratatui::text::Text;
 use ratatui::widgets::Widget;
 use std::time::{Duration, Instant};
 
+use crate::screens::{Kind, State};
+
 #[derive(Debug, Default)]
 pub struct ColorScreen {
     /// A widget that displays the full range of RGB colors that can be
@@ -47,8 +49,13 @@ struct ColorsWidget {
 }
 
 impl crate::screens::Screen for ColorScreen {
-    fn display(&mut self, _duration: Duration, frame: &mut Frame) {
+    fn kind(&self) -> Kind {
+        Kind::Color
+    }
+
+    fn display(&mut self, _state: State, frame: &mut Frame) -> bool {
         frame.render_widget(self, frame.area());
+        true
     }
 }
 

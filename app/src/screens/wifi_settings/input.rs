@@ -3,18 +3,7 @@ use crate::button::{ButtonId, ButtonPress, InputEvent};
 use crate::keyboard::{KeyboardAction, KeyboardContext};
 
 impl WiFiSettingsScreen {
-    pub fn is_keyboard_active(&self) -> bool {
-        self.focus == Focus::Keyboard
-    }
-
-    pub fn handle_input(&mut self, event: InputEvent) {
-        match self.focus {
-            Focus::Fields => self.handle_field_navigation(event),
-            Focus::Keyboard => self.handle_keyboard_input(event),
-        }
-    }
-
-    fn handle_field_navigation(&mut self, event: InputEvent) {
+    pub fn handle_field_navigation(&mut self, event: InputEvent) {
         match (event.id, event.press_type) {
             // X cycles backward through the fields
             (ButtonId::X, ButtonPress::Short) => {
@@ -51,7 +40,7 @@ impl WiFiSettingsScreen {
         }
     }
 
-    fn handle_keyboard_input(&mut self, event: InputEvent) {
+    pub fn handle_keyboard_input(&mut self, event: InputEvent) {
         if let Some(action) = self.keyboard.handle_input(event) {
             match action {
                 KeyboardAction::KeyPress(chars) => self.get_active_string().push_str(&chars),

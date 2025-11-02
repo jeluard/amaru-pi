@@ -9,22 +9,22 @@ use tui_big_text::{BigText, PixelSize};
 use crate::logs::{JournalReader, extract_tip_changed};
 use crate::screens::{Kind, State};
 
-pub struct TipScreen {
+pub struct LogsScreen {
     reader: JournalReader,
     current_slot: Option<Slot>,
     last_refresh: Instant,
 }
 
-impl TipScreen {
+impl LogsScreen {
     fn update_slot(&mut self, slot: Slot) {
         self.current_slot = Some(slot);
     }
 }
 
-impl Default for TipScreen {
+impl Default for LogsScreen {
     fn default() -> Self {
         let reader = JournalReader::new("amaru.service");
-        TipScreen {
+        LogsScreen {
             reader,
             current_slot: None,
             last_refresh: Instant::now(),
@@ -32,9 +32,9 @@ impl Default for TipScreen {
     }
 }
 
-impl crate::screens::Screen for TipScreen {
+impl crate::screens::Screen for LogsScreen {
     fn kind(&self) -> Kind {
-        Kind::Tip
+        Kind::Logs
     }
 
     fn display(&mut self, _state: State, frame: &mut Frame) -> bool {

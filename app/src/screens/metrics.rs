@@ -13,7 +13,8 @@ use ratatui::symbols::{self};
 use ratatui::text::Span;
 use ratatui::widgets::{Axis, Block, Chart, Dataset};
 use std::net::SocketAddr;
-use std::time::Duration;
+
+use crate::screens::{Kind, State};
 
 pub struct MetricsScreen {
     data1: Vec<(f64, f64)>,
@@ -100,7 +101,7 @@ impl Iterator for SinSignal {
 }
 
 impl MetricsScreen {
-    fn on_tick(&mut self, _duration: Duration, _frame: &mut Frame) {
+    fn on_tick(&mut self, _frame: &mut Frame) {
         self.data2.drain(0..10);
         self.data2.extend(self.signal2.by_ref().take(10));
 
@@ -110,10 +111,16 @@ impl MetricsScreen {
 }
 
 impl crate::screens::Screen for MetricsScreen {
-    fn display(&mut self, duration: Duration, frame: &mut Frame) {
-        self.on_tick(duration, frame);
+    fn kind(&self) -> Kind {
+        Kind::Metrics
+    }
+
+    fn display(&mut self, _state: State, frame: &mut Frame) -> bool {
+        self.on_tick(frame);
 
         self.render_animated_chart(frame, frame.area());
+
+        true
     }
 }
 

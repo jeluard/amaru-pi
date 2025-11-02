@@ -1,3 +1,5 @@
+use crate::screens::{Kind, State};
+
 use super::Screen;
 use indoc::indoc;
 use ratatui::{
@@ -73,8 +75,12 @@ impl ExitScreen {
 }
 
 impl Screen for ExitScreen {
-    fn display(&mut self, elapsed: Duration, frame: &mut Frame) {
-        self.on_tick(elapsed);
+    fn kind(&self) -> Kind {
+        Kind::Exit
+    }
+
+    fn display(&mut self, state: State, frame: &mut Frame) -> bool {
+        self.on_tick(state.elapsed);
 
         match self.stage {
             ExitStage::ShowingText => {
@@ -103,5 +109,6 @@ impl Screen for ExitScreen {
                 // The main loop will catch this and exit
             }
         }
+        true
     }
 }

@@ -1,5 +1,8 @@
 use super::{ActiveField, Focus, WiFiSettingsScreen};
-use crate::screens::Screen;
+use crate::{
+    button::InputEvent,
+    screens::{Kind, Screen, State},
+};
 use ratatui::{
     Frame,
     layout::{Alignment, Constraint, Direction, Layout, Rect},
@@ -7,10 +10,24 @@ use ratatui::{
     text::Line,
     widgets::{Block, Borders, Paragraph},
 };
-use std::time::Duration;
 
 impl Screen for WiFiSettingsScreen {
-    fn display(&mut self, _duration: Duration, frame: &mut Frame) {
+    fn kind(&self) -> Kind {
+        Kind::WiFiSettings
+    }
+
+    fn handle_input(&mut self, event: InputEvent) -> bool {
+        match self.focus {
+            Focus::Fields => self.handle_field_navigation(event),
+            Focus::Keyboard => {
+                self.handle_keyboard_input(event);
+                return true;
+            }
+        }
+        false
+    }
+
+    fn display(&mut self, _state: State, frame: &mut Frame) -> bool {
         let chunks = Layout::default()
             .direction(Direction::Vertical)
             .constraints([
@@ -37,6 +54,8 @@ impl Screen for WiFiSettingsScreen {
         self.render_password_input(frame, password_area_chunks[0]);
         self.render_visibility_button(frame, password_area_chunks[1]);
         self.render_keyboard(frame, chunks[4]);
+
+        true
     }
 }
 

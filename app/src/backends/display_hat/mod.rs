@@ -14,6 +14,8 @@ use rppal::spi::{Bus, Mode, SlaveSelect, Spi};
 use std::collections::HashMap;
 use std::sync::mpsc::Receiver;
 
+pub mod input;
+
 const W: i32 = 240;
 const H: i32 = 320;
 const BUTTON_A: u8 = 5;

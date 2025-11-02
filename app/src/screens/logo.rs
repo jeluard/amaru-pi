@@ -1,4 +1,4 @@
-use crate::screens::Screen;
+use crate::screens::{Kind, Screen, State};
 use ratatui::{
     Frame,
     buffer::Buffer,
@@ -71,10 +71,14 @@ impl Widget for &mut LogoScreen {
 }
 
 impl Screen for LogoScreen {
-    fn display(&mut self, elapsed: Duration, frame: &mut Frame) {
-        self.on_tick(elapsed, frame);
+    fn kind(&self) -> Kind {
+        Kind::Logo
+    }
 
-        self.time_in_stage += elapsed;
+    fn display(&mut self, state: State, frame: &mut Frame) -> bool {
+        self.on_tick(state.elapsed, frame);
+
+        self.time_in_stage += state.elapsed;
 
         let area = frame.area();
         let vertical = Layout::default()
@@ -106,5 +110,7 @@ impl Screen for LogoScreen {
         if !self.triggered && self.time_in_stage >= self.delay_explosion {
             self.trigger_explosion();
         }
+
+        self.time_in_stage <= (self.delay_explosion + self.splash_duration)
     }
 }
