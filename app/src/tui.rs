@@ -10,6 +10,7 @@ use crate::screens::{Kind, Screen, State};
 use crate::wifi::check_connectivity;
 use anyhow::Result;
 use ratatui::prelude::*;
+use std::collections::HashSet;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::{Duration, Instant};
@@ -42,6 +43,27 @@ impl ScreenFlow {
             Kind::Scan,
             Kind::WiFiSettings,
         ];
+        let mut seen_kinds = HashSet::new();
+
+        for screen in &screens {
+            let kind = screen.kind();
+            if !seen_kinds.insert(kind) {
+                panic!("Duplicate screen kind detected: {:?}", kind);
+            }
+        }
+
+        for &kind in &order {
+            if !seen_kinds.contains(&kind) {
+                panic!("No screen found for kind: {:?}", kind);
+            }
+        }
+
+        for &kind in &seen_kinds {
+            if !order.contains(&kind) {
+                panic!("Screen kind {:?} not present in order list", kind);
+            }
+        }
+
         Self {
             screens,
             order,
