@@ -1,0 +1,9 @@
+[Unit]
+Description=Service to periodically check for application updates
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/home/pi/bin/updater.sh
+User=pi
