@@ -75,7 +75,7 @@ pub fn run_and_capture(program: &str, args: Vec<&str>) -> anyhow::Result<String>
 }
 
 #[cfg(feature = "display_hat")]
-pub async fn check_connectivity() -> anyhow::Result<NetworkStatus> {
+pub fn check_connectivity() -> anyhow::Result<NetworkStatus> {
     let stdout = run_and_capture(
         "nmcli",
         ["-t", "-f", "STATE,CONNECTIVITY", "general", "status"].to_vec(),
@@ -93,7 +93,7 @@ pub async fn check_connectivity() -> anyhow::Result<NetworkStatus> {
 }
 
 #[cfg(not(feature = "display_hat"))]
-pub async fn check_connectivity() -> Result<Connectivity, Box<dyn std::error::Error>> {
+pub fn check_connectivity() -> Result<Connectivity, Box<dyn std::error::Error>> {
     Ok(Connectivity::Full)
 }
 
@@ -159,7 +159,7 @@ pub fn scan_ssids() -> anyhow::Result<Vec<String>> {
 const CONNECTION_NAME: &str = "mobile";
 
 #[cfg(feature = "display_hat")]
-pub async fn set_connection(ssid: &str, password: &str) -> anyhow::Result<()> {
+pub fn set_connection(ssid: &str, password: &str) -> anyhow::Result<()> {
     run_and_capture(
         "sudo",
         [
@@ -198,12 +198,12 @@ pub async fn set_connection(ssid: &str, password: &str) -> anyhow::Result<()> {
 }
 
 #[cfg(not(feature = "display_hat"))]
-pub async fn set_connection(_ssid: &str, _password: &str) -> anyhow::Result<()> {
+pub fn set_connection(_ssid: &str, _password: &str) -> anyhow::Result<()> {
     Ok(())
 }
 
 #[cfg(feature = "display_hat")]
-pub async fn up_connection(timeout: Duration) -> anyhow::Result<()> {
+pub fn up_connection(timeout: Duration) -> anyhow::Result<()> {
     let mut child = Command::new("sudo")
         .args(["nmcli", "con", "up", CONNECTION_NAME])
         .stdout(Stdio::inherit())
@@ -216,7 +216,6 @@ pub async fn up_connection(timeout: Duration) -> anyhow::Result<()> {
         match child.try_wait()? {
             Some(status) => {
                 if status.success() {
-                    println!("Connection successfully activated.");
                     return Ok(());
                 } else {
                     return Err(anyhow!("nmcli con up failed: {}", status));
@@ -237,12 +236,12 @@ pub async fn up_connection(timeout: Duration) -> anyhow::Result<()> {
 }
 
 #[cfg(not(feature = "display_hat"))]
-pub async fn up_connection(_timeout: Duration) -> anyhow::Result<()> {
+pub fn up_connection(_timeout: Duration) -> anyhow::Result<()> {
     Ok(())
 }
 
 #[cfg(feature = "display_hat")]
-pub async fn down_connection(timeout: Duration) -> anyhow::Result<()> {
+pub fn down_connection(timeout: Duration) -> anyhow::Result<()> {
     let mut child = Command::new("sudo")
         .args(["nmcli", "con", "down", CONNECTION_NAME])
         .stdout(Stdio::inherit())
@@ -276,6 +275,6 @@ pub async fn down_connection(timeout: Duration) -> anyhow::Result<()> {
 }
 
 #[cfg(not(feature = "display_hat"))]
-pub async fn down_connection(_timeout: Duration) -> anyhow::Result<()> {
+pub fn down_connection(_timeout: Duration) -> anyhow::Result<()> {
     Ok(())
 }

@@ -58,7 +58,6 @@ impl State {
 
 /// The abstraction allowing to manipulate Screen content
 pub trait Screen {
-
     /// The `Kind` associated to this screen. It must be unique per screen.
     fn kind(&self) -> Kind;
 
@@ -72,7 +71,8 @@ pub trait Screen {
     }
 
     /// Displays this screen.
-    /// Will be called again while `true` is returned. If `false`, triggers the logic to change screen.
+    /// Will be called again while `true` is returned. If `false`, triggers the
+    /// logic to change screen.
     fn display(&mut self, state: State, frame: &mut Frame) -> bool;
 
     // Called right after the last time the Screen is shown

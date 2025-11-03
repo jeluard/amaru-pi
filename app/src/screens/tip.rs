@@ -8,6 +8,7 @@ use tui_big_text::{BigText, PixelSize};
 
 use crate::logs::{JournalReader, extract_tip_changed};
 use crate::screens::{Kind, State};
+use crate::wifi::Connectivity;
 
 pub struct TipScreen {
     reader: JournalReader,
@@ -32,12 +33,25 @@ impl Default for TipScreen {
     }
 }
 
+fn create_lines<'a>(state: State, current_slot: Option<Slot>) -> Vec<Line<'a>> {
+    if state.connectivity == Connectivity::Full {
+        vec![Line::from("No connectivity")]
+    } else if let Some(current_slot) = current_slot {
+        vec![
+            Line::from("Slot"),
+            format!("#{}", current_slot).cyan().into(),
+        ]
+    } else {
+        vec![Line::from("Bootstrapping")]
+    }
+}
+
 impl crate::screens::Screen for TipScreen {
     fn kind(&self) -> Kind {
         Kind::Tip
     }
 
-    fn display(&mut self, _state: State, frame: &mut Frame) -> bool {
+    fn display(&mut self, state: State, frame: &mut Frame) -> bool {
         let now = Instant::now();
         if now - self.last_refresh > Duration::from_secs(1) {
             self.last_refresh = now;
@@ -61,14 +75,10 @@ impl crate::screens::Screen for TipScreen {
             ])
             .split(frame.area());
 
-        let lines = self
-            .current_slot
-            .map(|slot| vec![Line::from("Slot"), format!("#{}", slot).cyan().into()])
-            .unwrap_or(vec![Line::from("Bootstrapping")]);
         let text = BigText::builder()
             .pixel_size(PixelSize::Quadrant)
             .centered()
-            .lines(lines)
+            .lines(create_lines(state, self.current_slot))
             .build();
 
         frame.render_widget(text, chunks[1]);

@@ -48,14 +48,14 @@ pub async fn handle() -> Result<(), Box<dyn Error>> {
         Commands::Conf { conf_cmd } => match conf_cmd {
             ConfCommands::Wifi { wifi_cmd } => match wifi_cmd {
                 WifiCommands::SetConnection { ssid, password } => {
-                    wifi::set_connection(&ssid, &password).await?
+                    wifi::set_connection(&ssid, &password)?
                 }
                 WifiCommands::CheckConnectivity => {
-                    let connectivity = wifi::check_connectivity().await?;
+                    let connectivity = wifi::check_connectivity()?;
                     info!("{:?}", connectivity);
                 }
-                WifiCommands::Up => wifi::up_connection(Duration::from_secs(30)).await?,
-                WifiCommands::Down => wifi::down_connection(Duration::from_secs(30)).await?,
+                WifiCommands::Up => wifi::up_connection(Duration::from_secs(30))?,
+                WifiCommands::Down => wifi::down_connection(Duration::from_secs(30))?,
             },
         },
     }

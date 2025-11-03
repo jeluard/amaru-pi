@@ -7,13 +7,31 @@ use crate::screens::scan::ScanScreen;
 use crate::screens::tip::TipScreen;
 use crate::screens::wifi_settings::WiFiSettingsScreen;
 use crate::screens::{Kind, Screen, State};
-use crate::wifi::check_connectivity;
+use crate::wifi::{Connectivity, check_connectivity};
 use anyhow::Result;
 use ratatui::prelude::*;
 use std::collections::HashSet;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::{Duration, Instant};
+
+#[allow(clippy::type_complexity)]
+fn create_backend<'a>() -> Result<
+    (
+        mousefood::EmbeddedBackend<
+            'a,
+            embedded_graphics_simulator::SimulatorDisplay<mousefood::prelude::Rgb565>,
+            mousefood::prelude::Rgb565,
+        >,
+        std::sync::mpsc::Receiver<InputEvent>,
+    ),
+    anyhow::Error,
+> {
+    #[cfg(feature = "display_hat")]
+    backends::display_hat::setup_hardware_and_input();
+    #[cfg(feature = "simulator")]
+    Ok(backends::simulator::setup_simulator_and_input())
+}
 
 struct ScreenFlow {
     screens: Vec<Box<dyn Screen>>,
@@ -147,14 +165,40 @@ impl ScreenFlow {
     }
 }
 
-async fn create_state(elapsed: Duration) -> Result<State> {
-    // TODO every 1Os
-    Ok(State::new(
-        elapsed,
-        check_connectivity()
-            .await
-            .map_err(|err| anyhow::anyhow!(err.to_string()))?,
-    ))
+struct ConnectivityCache {
+    last_check: Instant,
+    last_result: Connectivity,
+    interval: Duration,
+}
+
+fn check_connectivity_or_unknown() -> Connectivity {
+    check_connectivity().unwrap_or(Connectivity::Unknown)
+}
+
+impl ConnectivityCache {
+    fn new(interval: Duration) -> Self {
+        Self {
+            last_check: Instant::now() - interval,
+            last_result: check_connectivity_or_unknown(),
+            interval,
+        }
+    }
+
+    async fn get(&mut self) -> Connectivity {
+        if self.last_check.elapsed() >= self.interval {
+            self.last_result = check_connectivity().unwrap_or(Connectivity::Unknown);
+            self.last_check = Instant::now();
+        }
+        self.last_result
+    }
+}
+
+async fn create_state(
+    elapsed: Duration,
+    connectivity_cache: &mut ConnectivityCache,
+) -> Result<State> {
+    let connectivity = connectivity_cache.get().await;
+    Ok(State::new(elapsed, connectivity))
 }
 
 pub async fn run() -> Result<()> {
@@ -163,21 +207,21 @@ pub async fn run() -> Result<()> {
     let mut last_loop = Instant::now();
 
     let mut screen_flow = ScreenFlow::new();
+    let mut connectivity_cache = ConnectivityCache::new(Duration::from_secs(5));
     let running = Arc::new(AtomicBool::new(true));
     while running.load(Ordering::SeqCst) {
-        let elapsed = last_loop.elapsed();
+        let elapsed_since_last_frame = last_loop.elapsed();
         last_loop = Instant::now();
 
         // TODO multiple events
-        if let Ok(event) = input_rx.try_recv() {
-            if !screen_flow.handle_input(event) {
-                if let (ButtonId::B, ButtonPress::Double) = (event.id, event.press_type) {
-                    running.store(false, Ordering::SeqCst);
-                }
-            }
+        if let Ok(event) = input_rx.try_recv()
+            && !screen_flow.handle_input(event)
+            && let (ButtonId::B, ButtonPress::Double) = (event.id, event.press_type)
+        {
+            running.store(false, Ordering::SeqCst);
         }
 
-        let state = create_state(elapsed).await?;
+        let state = create_state(elapsed_since_last_frame, &mut connectivity_cache).await?;
         terminal.draw(|frame| {
             screen_flow.display(state, frame);
         })?;
@@ -185,22 +229,4 @@ pub async fn run() -> Result<()> {
     terminal.clear()?;
 
     Ok(())
-}
-
-#[allow(clippy::type_complexity)]
-fn create_backend<'a>() -> Result<
-    (
-        mousefood::EmbeddedBackend<
-            'a,
-            embedded_graphics_simulator::SimulatorDisplay<mousefood::prelude::Rgb565>,
-            mousefood::prelude::Rgb565,
-        >,
-        std::sync::mpsc::Receiver<InputEvent>,
-    ),
-    anyhow::Error,
-> {
-    #[cfg(feature = "display_hat")]
-    backends::display_hat::setup_hardware_and_input();
-    #[cfg(feature = "simulator")]
-    Ok(backends::simulator::setup_simulator_and_input())
 }
