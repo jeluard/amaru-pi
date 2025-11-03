@@ -1,5 +1,6 @@
 [package]
 name = "amaru-pi"
+version = "0.0.4"
 edition = "2024"
 publish = false
 default-run = "amaru-pi"
