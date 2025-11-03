@@ -1,0 +1,8 @@
+[Unit]
+Description=Handle application update activation
+
+[Service]
+Type=oneshot
+# Run as root to have permission to restart services
+User=root
+ExecStart=/home/pi/bin/activate-update.sh

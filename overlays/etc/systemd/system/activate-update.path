@@ -1,0 +1,9 @@
+[Unit]
+Description=Watch for application restart requests
+
+[Path]
+# Trigger when this file is created
+PathExists=/home/pi/update-requested
+
+[Install]
+WantedBy=multi-user.target
