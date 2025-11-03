@@ -187,7 +187,7 @@ async fn create_state(
 
 pub async fn run() -> Result<()> {
     #[cfg(feature = "display_hat")]
-    let (backend, input_rx) = backends::display_hat::setup_hardware_and_input();
+    let (backend, input_rx) = backends::display_hat::setup_hardware_and_input()?;
     #[cfg(feature = "simulator")]
     let (backend, input_rx) = backends::simulator::setup_simulator_and_input();
     let mut terminal = Terminal::new(backend)?;
