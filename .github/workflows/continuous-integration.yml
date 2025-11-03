@@ -25,7 +25,7 @@ jobs:
         environments:
           - runner: ubuntu-latest
             title: ubuntu/aarch64-gnu
-            setup: sudo apt install -y gcc-aarch64-linux-gnu
+            setup: sudo apt update && sudo apt install -y gcc-aarch64-linux-gnu
 
           - runner: macos-latest
             title: MacOS/aarch64-gnu
