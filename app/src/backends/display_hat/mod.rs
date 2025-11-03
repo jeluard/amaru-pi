@@ -1,6 +1,5 @@
 use crate::backends::Backend;
 use crate::button::{ButtonId, InputEvent};
-use crate::input::InputHandler;
 use anyhow::Result;
 use embedded_hal_bus::spi::{ExclusiveDevice, NoDelay};
 use mipidsi::interface::SpiInterface;
@@ -59,7 +58,7 @@ pub fn setup_hardware_and_input() -> Result<(
     pin_map.insert(ButtonId::B, gpio.get(BUTTON_B)?.into_input_pullup());
     pin_map.insert(ButtonId::X, gpio.get(BUTTON_X)?.into_input_pullup());
     pin_map.insert(ButtonId::Y, gpio.get(BUTTON_Y)?.into_input_pullup());
-    let input_event_receiver = InputHandler::spawn(pin_map)?;
+    let input_event_receiver = input::InputHandler::spawn(pin_map)?;
 
     let mut led_r = gpio.get(LED_R)?.into_output();
     let mut led_g = gpio.get(LED_G)?.into_output();

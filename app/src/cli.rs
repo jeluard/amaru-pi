@@ -51,8 +51,8 @@ pub async fn handle() -> Result<(), Box<dyn Error>> {
                     wifi::set_connection(&ssid, &password)?
                 }
                 WifiCommands::CheckConnectivity => {
-                    let connectivity = wifi::check_connectivity()?;
-                    info!("{:?}", connectivity);
+                    let network_status = wifi::check_network_status()?;
+                    info!("{:?}", network_status);
                 }
                 WifiCommands::Up => wifi::up_connection(Duration::from_secs(30))?,
                 WifiCommands::Down => wifi::down_connection(Duration::from_secs(30))?,

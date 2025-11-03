@@ -7,31 +7,13 @@ use crate::screens::scan::ScanScreen;
 use crate::screens::tip::TipScreen;
 use crate::screens::wifi_settings::WiFiSettingsScreen;
 use crate::screens::{Kind, Screen, State};
-use crate::wifi::{Connectivity, check_connectivity};
+use crate::wifi::{Connectivity, NetworkState, NetworkStatus, check_network_status};
 use anyhow::Result;
 use ratatui::prelude::*;
 use std::collections::HashSet;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::{Duration, Instant};
-
-#[allow(clippy::type_complexity)]
-fn create_backend<'a>() -> Result<
-    (
-        mousefood::EmbeddedBackend<
-            'a,
-            embedded_graphics_simulator::SimulatorDisplay<mousefood::prelude::Rgb565>,
-            mousefood::prelude::Rgb565,
-        >,
-        std::sync::mpsc::Receiver<InputEvent>,
-    ),
-    anyhow::Error,
-> {
-    #[cfg(feature = "display_hat")]
-    backends::display_hat::setup_hardware_and_input();
-    #[cfg(feature = "simulator")]
-    Ok(backends::simulator::setup_simulator_and_input())
-}
 
 struct ScreenFlow {
     screens: Vec<Box<dyn Screen>>,
@@ -165,28 +147,30 @@ impl ScreenFlow {
     }
 }
 
-struct ConnectivityCache {
+fn check_network_status_or_unknown() -> NetworkStatus {
+    check_network_status().unwrap_or(NetworkStatus {
+        state: NetworkState::Unknown,
+        connectivity: Connectivity::Unknown,
+    })
+}
+struct NetworkStatusCache {
     last_check: Instant,
-    last_result: Connectivity,
+    last_result: NetworkStatus,
     interval: Duration,
 }
 
-fn check_connectivity_or_unknown() -> Connectivity {
-    check_connectivity().unwrap_or(Connectivity::Unknown)
-}
-
-impl ConnectivityCache {
+impl NetworkStatusCache {
     fn new(interval: Duration) -> Self {
         Self {
             last_check: Instant::now() - interval,
-            last_result: check_connectivity_or_unknown(),
+            last_result: check_network_status_or_unknown(),
             interval,
         }
     }
 
-    async fn get(&mut self) -> Connectivity {
+    async fn get(&mut self) -> NetworkStatus {
         if self.last_check.elapsed() >= self.interval {
-            self.last_result = check_connectivity().unwrap_or(Connectivity::Unknown);
+            self.last_result = check_network_status_or_unknown();
             self.last_check = Instant::now();
         }
         self.last_result
@@ -195,19 +179,22 @@ impl ConnectivityCache {
 
 async fn create_state(
     elapsed: Duration,
-    connectivity_cache: &mut ConnectivityCache,
+    network_status_cache: &mut NetworkStatusCache,
 ) -> Result<State> {
-    let connectivity = connectivity_cache.get().await;
-    Ok(State::new(elapsed, connectivity))
+    let network_status = network_status_cache.get().await;
+    Ok(State::new(elapsed, network_status))
 }
 
 pub async fn run() -> Result<()> {
-    let (backend, input_rx) = create_backend()?;
+    #[cfg(feature = "display_hat")]
+    let (backend, input_rx) = backends::display_hat::setup_hardware_and_input();
+    #[cfg(feature = "simulator")]
+    let (backend, input_rx) = backends::simulator::setup_simulator_and_input();
     let mut terminal = Terminal::new(backend)?;
     let mut last_loop = Instant::now();
 
     let mut screen_flow = ScreenFlow::new();
-    let mut connectivity_cache = ConnectivityCache::new(Duration::from_secs(5));
+    let mut connectivity_cache = NetworkStatusCache::new(Duration::from_secs(5));
     let running = Arc::new(AtomicBool::new(true));
     while running.load(Ordering::SeqCst) {
         let elapsed_since_last_frame = last_loop.elapsed();

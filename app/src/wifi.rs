@@ -50,7 +50,7 @@ impl From<&str> for NetworkState {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub struct NetworkStatus {
     pub state: NetworkState,
     pub connectivity: Connectivity,
@@ -75,7 +75,7 @@ pub fn run_and_capture(program: &str, args: Vec<&str>) -> anyhow::Result<String>
 }
 
 #[cfg(feature = "display_hat")]
-pub fn check_connectivity() -> anyhow::Result<NetworkStatus> {
+pub fn check_network_status() -> anyhow::Result<NetworkStatus> {
     let stdout = run_and_capture(
         "nmcli",
         ["-t", "-f", "STATE,CONNECTIVITY", "general", "status"].to_vec(),
@@ -93,8 +93,11 @@ pub fn check_connectivity() -> anyhow::Result<NetworkStatus> {
 }
 
 #[cfg(not(feature = "display_hat"))]
-pub fn check_connectivity() -> Result<Connectivity, Box<dyn std::error::Error>> {
-    Ok(Connectivity::Full)
+pub fn check_network_status() -> Result<NetworkStatus, Box<dyn std::error::Error>> {
+    Ok(NetworkStatus {
+        state: NetworkState::ConnectedGlobal,
+        connectivity: Connectivity::Full,
+    })
 }
 
 #[derive(Debug)]

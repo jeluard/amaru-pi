@@ -4,7 +4,7 @@ use std::{
     time::Duration,
 };
 
-use crate::{button::InputEvent, wifi::Connectivity};
+use crate::{button::InputEvent, wifi::NetworkStatus};
 
 pub mod color;
 pub mod exit;
@@ -44,14 +44,14 @@ impl Display for Kind {
 
 pub struct State {
     elapsed: Duration,
-    connectivity: Connectivity,
+    network_status: NetworkStatus,
 }
 
 impl State {
-    pub fn new(elapsed: Duration, connectivity: Connectivity) -> Self {
+    pub fn new(elapsed: Duration, network_status: NetworkStatus) -> Self {
         State {
             elapsed,
-            connectivity,
+            network_status,
         }
     }
 }

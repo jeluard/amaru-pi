@@ -34,7 +34,7 @@ impl Default for TipScreen {
 }
 
 fn create_lines<'a>(state: State, current_slot: Option<Slot>) -> Vec<Line<'a>> {
-    if state.connectivity == Connectivity::Full {
+    if state.network_status.connectivity == Connectivity::Full {
         vec![Line::from("No connectivity")]
     } else if let Some(current_slot) = current_slot {
         vec![
