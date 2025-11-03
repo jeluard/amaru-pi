@@ -11,7 +11,7 @@ if [ ! -f "$ARCHIVE" ]; then
   exit 0
 fi
 
-set -- *.db
+set -- *.db # Sets all `*.db` file as positional parameters
 if [ -e "$1" ] && [ -z "${FORCE_UNPACK:-}" ]; then
   echo "Found existing .db files. Skipping unpack. (Use FORCE_UNPACK=1 to override.)"
   exit 0
