@@ -1,0 +1,12 @@
+[Unit]
+Description=Run the application updater periodically
+
+[Timer]
+# Run 10 minutes after boot
+OnBootSec=10min
+# And then run every 60 minutes
+OnUnitActiveSec=60m
+Unit=updater.service
+
+[Install]
+WantedBy=timers.target
