@@ -6,7 +6,7 @@ SSHD_CONFIG="/etc/ssh/sshd_config"
 
 # Ensure the file exists
 if [ ! -f "$SSHD_CONFIG" ]; then
-    echo "Error: $SSHD_CONFIG not found."
+    echo "❌ Error: $SSHD_CONFIG not found."
     exit 1
 fi
 

@@ -16,16 +16,12 @@ enable_service() {
         sudo_cmd="sudo"
     fi
 
-    echo "Reloading systemd daemon..."
+    echo "🔁 Reloading systemd daemon..."
     $sudo_cmd systemctl daemon-reload
 
-    echo "Checking if $service_name is enabled..."
     if ! systemctl is-enabled --quiet "$service_name"; then
-        echo "Enabling $service_name..."
+        echo "➡️ Enabling $service_name..."
         $sudo_cmd systemctl enable "$service_name"
-        echo "$service_name is now enabled."
-    else
-        echo "$service_name is already enabled."
     fi
 }
 
