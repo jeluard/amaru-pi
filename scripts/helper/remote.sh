@@ -50,7 +50,7 @@ run_remote_script() {
     fi
 
     # Run the remote script with the environment
-    ssh ${opts} "$remote" "$remote_env SETUP_SCRIPT='$script'; \
+    ssh -t ${opts} "$remote" "$remote_env SETUP_SCRIPT='$script'; \
         if [[ -f \$SETUP_SCRIPT ]]; then \
             sudo bash \"\$SETUP_SCRIPT\" ${script_args[@]+"${script_args[@]}"}; \
         else \
