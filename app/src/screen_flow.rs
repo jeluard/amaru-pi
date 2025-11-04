@@ -6,6 +6,7 @@ use crate::screens::scan::ScanScreen;
 use crate::screens::tip::TipScreen;
 use crate::screens::wifi_settings::WiFiSettingsScreen;
 use crate::screens::{Kind, Screen, State};
+use crate::systemd::ActiveState;
 use crate::top_bar::TopBar;
 use crate::wifi::Connectivity;
 use ratatui::prelude::*;
@@ -139,14 +140,20 @@ impl ScreenFlow {
         let [top_area, body] =
             Layout::vertical([Constraint::Length(1), Constraint::Min(0)]).areas(frame.area());
 
-        let pixel_color = match state.network_status.connectivity {
+        let amaru_status_color = match state.amaru_status.active_state {
+            ActiveState::Active => Color::Green,
+            ActiveState::Failed => Color::Red,
+            _ => Color::Yellow,
+        };
+        let network_status_color = match state.network_status.connectivity {
             Connectivity::Full => Color::Green,
             Connectivity::None => Color::Red,
             _ => Color::Yellow,
         };
         let top_bar = TopBar {
             title: "Amaru",
-            pixel_color,
+            amaru_status_color,
+            network_status_color,
             background: Color::Black,
         };
 

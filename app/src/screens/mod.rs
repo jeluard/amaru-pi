@@ -4,7 +4,7 @@ use std::{
     time::Duration,
 };
 
-use crate::{button::InputEvent, wifi::NetworkStatus};
+use crate::{button::InputEvent, systemd::ServiceInfo, wifi::NetworkStatus};
 
 pub mod color;
 pub mod exit;
@@ -46,6 +46,7 @@ pub struct State {
     pub frame_count: u64,
     pub elapsed_since_startup: Duration,
     pub elapsed_since_last_frame: Duration,
+    pub amaru_status: ServiceInfo,
     pub network_status: NetworkStatus,
 }
 
@@ -54,12 +55,14 @@ impl State {
         frame_count: u64,
         elapsed_since_last_frame: Duration,
         elapsed_since_startup: Duration,
+        amaru_status: ServiceInfo,
         network_status: NetworkStatus,
     ) -> Self {
         State {
             frame_count,
             elapsed_since_startup,
             elapsed_since_last_frame,
+            amaru_status,
             network_status,
         }
     }

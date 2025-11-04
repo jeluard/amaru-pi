@@ -3,13 +3,14 @@ use ratatui::widgets::{Block, Borders, Paragraph};
 
 pub struct TopBar<'a> {
     pub title: &'a str,
-    pub pixel_color: Color,
+    pub amaru_status_color: Color,
+    pub network_status_color: Color,
     pub background: Color,
 }
 
 impl<'a> Widget for TopBar<'a> {
     fn render(self, area: Rect, buf: &mut Buffer) {
-        let [_pad_left, left, _spacer, right, _pad_right] = Layout::horizontal([
+        let [_pad_left, left, before_right, right, _pad_right] = Layout::horizontal([
             Constraint::Length(1),
             Constraint::Min(1),
             Constraint::Length(1),
@@ -32,7 +33,11 @@ impl<'a> Widget for TopBar<'a> {
         .block(Block::default().borders(Borders::NONE))
         .render(left, buf);
 
-        Paragraph::new(Span::styled("●", Style::default().fg(self.pixel_color)))
+        Paragraph::new(Span::styled("●", Style::default().fg(self.amaru_status_color)))
+            .block(Block::default().borders(Borders::NONE))
+            .render(before_right, buf);
+
+        Paragraph::new(Span::styled("●", Style::default().fg(self.network_status_color)))
             .block(Block::default().borders(Borders::NONE))
             .render(right, buf);
     }

@@ -1,4 +1,4 @@
-use crate::backends;
+use crate::{backends, systemd};
 use crate::button::{ButtonId, ButtonPress};
 use crate::network_status::NetworkStatusCache;
 use crate::screen_flow::ScreenFlow;
@@ -15,11 +15,13 @@ async fn create_state(
     elapsed_since_startup: Duration,
     network_status_cache: &mut NetworkStatusCache,
 ) -> Result<State> {
+    let amaru_status = systemd::get_systemd_service_info("amaru").unwrap_or_default();
     let network_status = network_status_cache.get().await;
     Ok(State::new(
         frame_count,
         elapsed_since_last_frame,
         elapsed_since_startup,
+        amaru_status,
         network_status,
     ))
 }

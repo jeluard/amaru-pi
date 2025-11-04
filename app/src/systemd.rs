@@ -1,13 +1,14 @@
 use std::collections::HashMap;
 use std::process::Command;
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub enum ActiveState {
     Active,
     Inactive,
     Failed,
     Activating,
     Deactivating,
+    #[default]
     Unknown,
 }
 
@@ -24,7 +25,7 @@ impl From<&str> for ActiveState {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub enum EnabledState {
     Enabled,
     Disabled,
@@ -32,6 +33,7 @@ pub enum EnabledState {
     Indirect,
     Generated,
     Masked,
+    #[default]
     Unknown,
 }
 
@@ -49,7 +51,7 @@ impl From<&str> for EnabledState {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct ServiceInfo {
     pub name: String,
     pub description: String,
