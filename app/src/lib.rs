@@ -6,5 +6,6 @@ pub mod logs;
 pub mod screen_flow;
 pub mod screens;
 pub mod systemd;
+pub mod top_bar;
 pub mod tui;
 pub mod wifi;

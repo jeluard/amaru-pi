@@ -6,7 +6,7 @@ use crate::screens::scan::ScanScreen;
 use crate::screens::tip::TipScreen;
 use crate::screens::wifi_settings::WiFiSettingsScreen;
 use crate::screens::{Kind, Screen, State};
-use crate::tui::TopBar;
+use crate::top_bar::TopBar;
 use crate::wifi::Connectivity;
 use ratatui::prelude::*;
 use std::collections::HashSet;
