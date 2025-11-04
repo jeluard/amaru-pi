@@ -2,6 +2,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+HELPER_DIR="${SCRIPT_DIR}/helper"
 
 source ${SCRIPT_DIR}/helper/remote.sh
 
@@ -9,8 +10,6 @@ SSH_REMOTE="$(get_ssh_remote "$@")"
 SSH_OPTS="${SSH_OPTS:-}"
 BUILD_ASSETS="${BUILD_ASSETS:-false}"
 RUN_SETUP="${RUN_SETUP:-true}"
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-HELPER_DIR="${SCRIPT_DIR}/helper"
 
 if [[ -n "$BUILD_ASSETS" ]]; then
   ${HELPER_DIR}/build-assets.sh

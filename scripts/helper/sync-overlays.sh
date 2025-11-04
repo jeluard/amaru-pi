@@ -2,13 +2,14 @@
 
 set -euo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+HELPER_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT_DIR="${HELPER_DIR}/../.."
+OVERLAYS_DIR="${ROOT_DIR}/overlays"
 
-source ${SCRIPT_DIR}/helper/remote.sh
+source ${HELPER_DIR}/remote.sh
 
 SSH_REMOTE="$(get_ssh_remote "$@")"
 SSH_OPTS="${SSH_OPTS:-}"
-OVERLAYS_DIR="overlays"
 
 [[ -d "${OVERLAYS_DIR}" ]] || { echo "Error: '${OVERLAYS_DIR}' directory not found."; exit 1; }
 
