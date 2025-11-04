@@ -1,8 +1,6 @@
+use crate::{tui, wifi};
 use clap::{Parser, Subcommand};
 use std::{error::Error, time::Duration};
-use tracing::info;
-
-use crate::{tui, wifi};
 
 #[derive(Parser, Debug)]
 #[command(author, version, about)]
