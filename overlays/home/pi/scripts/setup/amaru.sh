@@ -4,7 +4,8 @@ set -euo pipefail
 
 echo 'export PATH="$PATH:/home/pi/bin"' >> ~/.profile
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SETUP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SCRIPT_DIR="$SCRIPT_DIR/.."
 ARCHIVE="$SCRIPT_DIR/../bin/dbs.tar.gz"
 if [ ! -f "$ARCHIVE" ]; then
   echo "Warning: Archive '$ARCHIVE' does not exist."
