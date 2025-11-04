@@ -30,6 +30,7 @@ enable_service() {
 }
 
 reload_systemd
+enable_service first-boot
 enable_service amaru
 enable_service amaru-pi
 enable_service splash

@@ -1,0 +1,13 @@
+[Unit]
+Description=First Boot Script
+After=network.target
+
+[Service]
+Type=oneshot
+ExecStart=/home/pi/bin/first-boot.sh
+WorkingDirectory=/home/pi/bin
+RemainAfterExit=yes
+User=root
+
+[Install]
+WantedBy=multi-user.target
