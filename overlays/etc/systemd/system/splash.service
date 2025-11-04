@@ -1,6 +1,5 @@
 [Unit]
 Description=Splash screen on the DisplayHat mini
-DefaultDependencies=no
 Before=amaru-pi.service
 
 [Service]
@@ -10,6 +9,8 @@ ExecStart=/usr/local/bin/splash.py
 RemainAfterExit=yes
 StandardOutput=journal
 StandardError=journal
+Restart=on-failure
+RestartSec=2s
 
 [Install]
 WantedBy=multi-user.target

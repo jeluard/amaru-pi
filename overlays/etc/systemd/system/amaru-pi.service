@@ -1,14 +1,15 @@
 [Unit]
 Description=Amaru PI
 Requires=splash.service
-After=local-fs.target splash.service
+After=splash.service
 
 [Service]
 Type=simple
 EnvironmentFile=/home/pi/amaru.env
 ExecStart=/home/pi/bin/amaru-pi
 WorkingDirectory=/home/pi/bin
-Restart=no
+Restart=on-failure
+RestartSec=5s
 User=root
 StandardOutput=journal
 StandardError=journal

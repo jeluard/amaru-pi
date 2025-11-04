@@ -28,5 +28,5 @@ amaru_pi_conf() {
     local default_args="conf"
 
     # Call the binary with default args plus any extra ones passed to the function
-    ${BIN_DIR}/amaru-pi $default_args "$@"
+    sudo ${BIN_DIR}/amaru-pi $default_args "$@"
 }
