@@ -3,6 +3,7 @@ pub mod button;
 pub mod cli;
 pub mod keyboard;
 pub mod logs;
+pub mod screen_flow;
 pub mod screens;
 pub mod systemd;
 pub mod tui;
