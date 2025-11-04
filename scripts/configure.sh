@@ -37,7 +37,7 @@ validate_action() {
 if [[ -n "${SSH_REMOTE:-}" ]]; then
   ACTION="${1:-all}"
 else
-  SSH_REMOTE="${1:-}"
+  SSH_REMOTE="$(get_ssh_remote "$@")"
   ACTION="${2:-all}"
   validate_action "$ACTION"
 fi
@@ -45,6 +45,12 @@ fi
 if [[ "$ACTION" == "envs" || "$ACTION" == "all" ]]; then
   if [[ -z "${AMARU_WORDS:-}" ]]; then
     echo "Error: AMARU_WORDS is not set (required for envs)."
+    exit 1
+  fi
+
+    # Check format: three lowercase words separated by hyphens
+  if ! [[ "$AMARU_WORDS" =~ ^[a-z]+-[a-z]+-[a-z]+$ ]]; then
+    echo "Error: AMARU_WORDS must be three lowercase words separated by hyphens (e.g., 'alpha-bravo-charlie')."
     exit 1
   fi
 fi

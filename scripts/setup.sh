@@ -1,17 +1,16 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-SSH_REMOTE="${SSH_REMOTE:-$1}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+source ${SCRIPT_DIR}/helper/remote.sh
+
+SSH_REMOTE="$(get_ssh_remote "$@")"
 SSH_OPTS="${SSH_OPTS:-}"
 BUILD_ASSETS="${BUILD_ASSETS:-false}"
 RUN_SETUP="${RUN_SETUP:-true}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 HELPER_DIR="${SCRIPT_DIR}/helper"
-
-if [[ -z "$SSH_REMOTE" ]]; then
-  echo "Usage: $0 user@host"
-  exit 2
-fi
 
 if [[ -n "$BUILD_ASSETS" ]]; then
   ${HELPER_DIR}/build-assets.sh

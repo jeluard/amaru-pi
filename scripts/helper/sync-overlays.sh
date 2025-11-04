@@ -2,14 +2,13 @@
 
 set -euo pipefail
 
-SSH_REMOTE="${SSH_REMOTE:-$1}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+source ${SCRIPT_DIR}/helper/remote.sh
+
+SSH_REMOTE="$(get_ssh_remote "$@")"
 SSH_OPTS="${SSH_OPTS:-}"
 OVERLAYS_DIR="overlays"
-
-if [[ -z "$SSH_REMOTE" ]]; then
-  echo "Usage: $0 user@host"
-  exit 2
-fi
 
 [[ -d "${OVERLAYS_DIR}" ]] || { echo "Error: '${OVERLAYS_DIR}' directory not found."; exit 1; }
 

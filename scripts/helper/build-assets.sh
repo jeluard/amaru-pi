@@ -2,21 +2,24 @@
 
 set -euo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+HELPER_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT_DIR="${HELPER_DIR}/../.."
+OVERLAYS_DIR="${ROOT_DIR}/overlays"
 
 # Automatically export all variables
 set -o allexport
-source ${SCRIPT_DIR}/../../overlays/home/pi/amaru.env
+source ${OVERLAYS_DIR}/home/pi/amaru.env
 set +o allexport # Restore regular behavior
 
 # Make sure that OpenTelemetry is always disabled during build
 export AMARU_WITH_OPEN_TELEMETRY=false
+export AMARU_WITH_JSON_TRACES=false
 
-BIN_DIR="${SCRIPT_DIR}/../overlays/home/pi/bin"
+BIN_DIR="${OVERLAYS_DIR}/home/pi/bin"
 mkdir -p ${BIN_DIR}
 echo "✅ Created bin directory: $BIN_DIR"
 
-BUILD_DIR="${SCRIPT_DIR}/../.build"
+BUILD_DIR="${ROOT_DIR}/.build"
 mkdir -p ${BUILD_DIR}
 cd ${BUILD_DIR}
 echo "✅ Created build directory: $BUILD_DIR"
@@ -57,7 +60,7 @@ sync_repo() {
 
 # Create fresh DBs locally
 DBS_SNAPSHOT="${BIN_DIR}/dbs.tar.gz"
-if [ ! -f "${DBS_SNAPSHOT}" ]; then
+if [ ! -f "${DBS_SNAPSHOT}" ]|| [ -n "${REFRESH_SNAPSHOT:-}" ]; then
     echo "🔨 Building databases snapshot..."
     cd ${BUILD_DIR}
     sync_repo https://github.com/pragma-org/amaru $BUILD_DIR/amaru-offline jeluard/offline

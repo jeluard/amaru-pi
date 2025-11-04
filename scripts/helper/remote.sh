@@ -2,6 +2,18 @@
 
 set -euo pipefail
 
+get_ssh_remote() {
+  local arg1="${1:-}"
+  local ssh_remote="${SSH_REMOTE:-${arg1:-}}"
+
+  if [[ -z "$ssh_remote" ]]; then
+    echo "Usage: $0 user@host or export SSH_REMOTE=user@host" >&2
+    exit 2
+  fi
+
+  echo "$ssh_remote"
+}
+
 run_remote_script() {
     local remote="$1"; shift
     local opts="$1"; shift
