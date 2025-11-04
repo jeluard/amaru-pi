@@ -2,6 +2,10 @@
 
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+source ${SCRIPT_DIR}/helper.sh
+
 usage() {
   echo "Usage: $0 [envs|wifi|all]"
   echo "  envs  - configure only environment variables"

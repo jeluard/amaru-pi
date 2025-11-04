@@ -2,8 +2,8 @@
 
 set -euo pipefail
 
-if [ -z "${!AMARU_WORDS}" ]; then
-    echo "Error: $AMARU_WORDS is not set."
+if [ -z "${AMARU_WORDS}" ]; then
+    echo "❌ Error: $AMARU_WORDS is not set."
     exit 1
 fi
 
@@ -11,7 +11,7 @@ ensure_env_line() {
   local file="$1"
   local key="$2"
   local value="$3"
-  local replace_if_found="$4"  # "true" or "false"
+  local replace_if_found="${4:-true}"
 
   mkdir -p "$(dirname "$file")"
   touch "$file"
@@ -22,7 +22,7 @@ ensure_env_line() {
 
   # Validate key and value
   if [[ -z "$key" || -z "$value" ]]; then
-    echo "Error: missing key or value." >&2
+    echo "❌ Error: missing key or value." >&2
     echo "Usage: ensure_env_line <file> <key> <value> <replace_if_found>" >&2
     return 2
   fi
@@ -32,16 +32,16 @@ ensure_env_line() {
     existing="$(grep -E "^${key}=" "$file" | head -n1 | cut -d= -f2-)"
     if [ "$replace_if_found" = "true" ]; then
       sed -i "s|^${key}=.*|${key}=${value}|" "$file"
-      echo "Updated: $key=$value"
+      echo "✅ Updated: $key=$value"
     else
-      echo "Error: key '$key' already exists with value '$existing' in $file" >&2
+      echo "❌ Error: key '$key' already exists with value '$existing' in $file" >&2
       return 1
     fi
   else
-    echo "${key}=${value}" >> "$file"
-    echo "Added: $key=$value"
+    printf "\n%s=%s\n" "$key" "$value" >> "$file"
+    echo "✅ Added: $key=$value"
   fi
 }
 
 ENV_FILE="/home/pi/amaru.env"
-ensure_env_line "\$ENV_FILE" "AMARU_WORDS=\$AMARU_WORDS"
+ensure_env_line "$ENV_FILE" "AMARU_WORDS" "${AMARU_WORDS}"

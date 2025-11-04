@@ -40,7 +40,6 @@ run_remote_script() {
     if ((${#env_vars[@]})); then
         for var in "${env_vars[@]:-}"; do
             if [[ -n "${!var-}" ]]; then
-                # Safely quote values
                 remote_env+="$var='${!var//\'/\'\\\'\'}' "
             else
                 echo "⚠️ Local env var $var is not set"
@@ -50,11 +49,11 @@ run_remote_script() {
     fi
 
     # Run the remote script with the environment
-    ssh -t ${opts} "$remote" "$remote_env SETUP_SCRIPT='$script'; \
-        if [[ -f \$SETUP_SCRIPT ]]; then \
-            sudo bash \"\$SETUP_SCRIPT\" ${script_args[@]+"${script_args[@]}"}; \
+    ssh -t ${opts} "$remote" "$remote_env export $(printf '%s ' "${env_vars[@]}"); REMOTE_SCRIPT='$script'; \
+        if [[ -f \$REMOTE_SCRIPT ]]; then \
+            bash \"\$REMOTE_SCRIPT\" ${script_args[@]+"${script_args[@]}"}; \
         else \
-            echo '⚠️ Script '\$SETUP_SCRIPT' not found'; \
+            echo '⚠️ Script '\$REMOTE_SCRIPT' not found'; \
             exit 127; \
         fi"
 

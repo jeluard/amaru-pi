@@ -10,16 +10,16 @@ ask_and_reboot() {
 
     read -rp "➡️ Reboot to apply changes? (yes/NO): " CONFIRM
     if [[ "$CONFIRM" == "yes" ]]; then
-        echo "Rebooting in 10 seconds... Press Ctrl+C to cancel."
+        echo "➡️ Rebooting in 10 seconds... Press Ctrl+C to cancel."
         for i in {10..1}; do
             echo -ne "$i\r"
             sleep 1
         done
-        echo "Rebooting now..."
+        echo "🔁 Rebooting now..."
 
         sudo reboot
     else
-        echo "No reboot. Changes won't be applied until next reboot"
+        echo "⚠️ No reboot. Changes won't be applied until next reboot"
     fi
 }
 
