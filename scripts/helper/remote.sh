@@ -49,7 +49,7 @@ run_remote_script() {
     fi
 
     # Run the remote script with the environment
-    ssh -t ${opts} "$remote" "$remote_env export $(printf '%s ' "${env_vars[@]}"); REMOTE_SCRIPT='$script'; \
+    ssh -t ${opts} "$remote" "$remote_env export $(printf '%s ' "${env_vars[@]:-}"); REMOTE_SCRIPT='$script'; \
         if [[ -f \$REMOTE_SCRIPT ]]; then \
             bash \"\$REMOTE_SCRIPT\" ${script_args[@]+"${script_args[@]}"}; \
         else \
