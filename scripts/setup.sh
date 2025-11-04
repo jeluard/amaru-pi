@@ -19,7 +19,7 @@ fi
 
 ${HELPER_DIR}/sync-overlays.sh
 
-run_remote_script {$SSH_REMOTE} ${SSH_OPTS} /home/pi/scripts/setup.sh AMARU_WORDS AMARU_WIFI_SSID AMARU_WIFI_PASSWORD
+run_remote_script "${SSH_REMOTE}" "${SSH_OPTS}" /home/pi/scripts/setup.sh
 rc=$?
 
 if [[ $rc -ne 0 ]]; then
