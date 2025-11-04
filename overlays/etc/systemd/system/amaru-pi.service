@@ -9,7 +9,7 @@ EnvironmentFile=/home/pi/amaru.env
 ExecStart=/home/pi/bin/amaru-pi
 WorkingDirectory=/home/pi/bin
 Restart=no
-User=pi
+User=root
 StandardOutput=journal
 StandardError=journal
 
