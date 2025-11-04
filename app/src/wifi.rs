@@ -62,14 +62,16 @@ pub fn run_and_capture(program: &str, args: Vec<&str>) -> anyhow::Result<String>
     cmd.stdout(Stdio::piped()).stderr(Stdio::piped());
     let child = cmd.output().context("failed to spawn command")?;
     let stdout = String::from_utf8_lossy(&child.stdout).trim().to_string();
+    let stderr = String::from_utf8_lossy(&child.stderr).trim().to_string();
 
     if child.status.success() {
         Ok(stdout)
     } else {
         Err(anyhow!(
-            "command exited with status {}: {}",
+            "command exited with status {}: {} :: {}",
             child.status,
-            stdout
+            stdout,
+            stderr
         ))
     }
 }
@@ -164,18 +166,17 @@ const CONNECTION_NAME: &str = "mobile";
 #[cfg(feature = "display_hat")]
 pub fn set_connection(ssid: &str, password: &str) -> anyhow::Result<()> {
     run_and_capture(
-        "sudo",
+        "nmcli",
         [
-            "nmcli", "con", "add", "type", "wifi", "ifname", "wlan0", "con-name", "mobile", "ssid",
+            "con", "add", "type", "wifi", "ifname", "wlan0", "con-name", "mobile", "ssid",
             ssid,
         ]
         .to_vec(),
     )?;
 
     run_and_capture(
-        "sudo",
+        "nmcli",
         [
-            "nmcli",
             "con",
             "modify",
             CONNECTION_NAME,
@@ -186,9 +187,8 @@ pub fn set_connection(ssid: &str, password: &str) -> anyhow::Result<()> {
     )?;
 
     run_and_capture(
-        "sudo",
+        "nmcli",
         [
-            "nmcli",
             "con",
             "modify",
             CONNECTION_NAME,
@@ -207,8 +207,8 @@ pub fn set_connection(_ssid: &str, _password: &str) -> anyhow::Result<()> {
 
 #[cfg(feature = "display_hat")]
 pub fn up_connection(timeout: Duration) -> anyhow::Result<()> {
-    let mut child = Command::new("sudo")
-        .args(["nmcli", "con", "up", CONNECTION_NAME])
+    let mut child = Command::new("nmcli")
+        .args(["con", "up", CONNECTION_NAME])
         .stdout(Stdio::inherit())
         .stderr(Stdio::inherit())
         .spawn()
@@ -245,8 +245,8 @@ pub fn up_connection(_timeout: Duration) -> anyhow::Result<()> {
 
 #[cfg(feature = "display_hat")]
 pub fn down_connection(timeout: Duration) -> anyhow::Result<()> {
-    let mut child = Command::new("sudo")
-        .args(["nmcli", "con", "down", CONNECTION_NAME])
+    let mut child = Command::new("nmcli")
+        .args(["con", "down", CONNECTION_NAME])
         .stdout(Stdio::inherit())
         .stderr(Stdio::inherit())
         .spawn()
