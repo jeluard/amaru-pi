@@ -32,3 +32,5 @@ enable_service() {
 enable_service amaru
 enable_service amaru-pi
 enable_service splash
+enable_service updater.timer
+enable_service activate-update.path

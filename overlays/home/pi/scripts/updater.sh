@@ -4,108 +4,146 @@ set -euo pipefail
 
 STATE_FILE="/home/pi/.amaru_update_state.json"
 STAGING_DIR="/tmp"
+LOCK_FILE="/tmp/amaru_check_update.lock"
 
 declare -a BINARIES_TO_UPDATE=("amaru-pi")
+declare -A GITHUB_REPOS=( ["amaru-pi"]="jeluard/amaru-pi" )
 
-declare -A GITHUB_REPOS
-GITHUB_REPOS["amaru-pi"]="jeluard/amaru-pi"
+exec 200>"$LOCK_FILE"
+flock -n 200 || { echo "ERROR: Another update process is running."; exit 1; }
 
-if [ ! -f "$STATE_FILE" ]; then
-    echo "INFO: State file not found. Creating a new one at ${STATE_FILE}"
-    jq -n '{
-        "notify_after": 0,
-        "applications": {
-            "amaru": {"current_version": "v0.0.0", "update_available": false, "staged_path": ""},
-            "amaru-pi": {"current_version": "v0.0.0", "update_available": false, "staged_path": ""},
-            "amaru-doctor": {"current_version": "v0.0.0", "update_available": false, "staged_path": ""}
-        }
-    }' > "$STATE_FILE"
-fi
+log() { logger -t amaru-check "$1"; echo "$1"; }
 
-function check_one_binary() {
-    local binary_name="$1"
-    local github_repo="${GITHUB_REPOS[$binary_name]}"
-    local staging_path="${STAGING_DIR}/${binary_name}.new"
-
-    echo "INFO: Processing check for ${binary_name}..."
-
-    local current_version
-    current_version=$(jq -r ".applications[\"${binary_name}\"].current_version" "$STATE_FILE")
-    echo "INFO: Current local version is ${current_version}"
-
-    local api_url="https://api.github.com/repos/${github_repo}/releases/latest"
-    local latest_release_json
-    latest_release_json=$(curl -s -f "${api_url}")
-
-    if [ -z "$latest_release_json" ]; then
-        echo "WARN: Could not fetch release info for ${binary_name}. Skipping."
-        return
-    fi
-
-    local latest_version
-    latest_version=$(echo "${latest_release_json}" | jq -r '.tag_name')
-    echo "INFO: Latest available version is ${latest_version}"
-
-    if [ "${current_version}" == "${latest_version}" ]; then
-        echo "INFO: ${binary_name} is already up to date."
-        return
-    fi
-
-    local download_url
-    download_url=$(echo "${latest_release_json}" | jq -r ".assets[] | select(.name | contains(\"${binary_name}\") and contains(\"aarch64\")) | .browser_download_url")
-    local checksum_url
-    checksum_url=$(echo "${latest_release_json}" | jq -r ".assets[] | select(.name | endswith(\"checksums.txt\")) | .browser_download_url")
-
-    if [ -z "$download_url" ] || [ -z "$checksum_url" ]; then
-        echo "ERROR: Could not find required assets (binary or checksum) for ${binary_name} in release ${latest_version}. Aborting."
-        return
-    fi
-
-    echo "INFO: Downloading assets for new version..."
-    local temp_checksum_file="/tmp/${binary_name}_checksums.txt"
-    local temp_archive="/tmp/${binary_name}_latest.tar.gz"
-    curl -sL -o "${temp_checksum_file}" "${checksum_url}"
-    curl -sL -o "${temp_archive}" "${download_url}"
-
-    echo "INFO: Verifying checksum..."
-    local expected_checksum
-    expected_checksum=$(grep "${binary_name}" "${temp_checksum_file}" | awk '{print $1}')
-    local actual_checksum
-    actual_checksum=$(sha256sum "${temp_archive}" | awk '{print $1}')
-
-    if [ "${expected_checksum}" != "${actual_checksum}" ]; then
-        echo "ERROR: Checksum mismatch for ${binary_name}! Downloaded file is corrupt. Aborting."
-        rm "${temp_archive}" "${temp_checksum_file}"
-        return
-    fi
-    echo "INFO: Checksum OK."
-
-    echo "INFO: Extracting to staging location: ${staging_path}"
-    tar -xzf "${temp_archive}" -C "${STAGING_DIR}"
-    mv "${STAGING_DIR}/${binary_name}" "${staging_path}"
-    
-    rm "${temp_archive}" "${temp_checksum_file}"
-
-    echo "INFO: Staging complete. Updating state file."
-    
-    local temp_state_file
-    temp_state_file=$(mktemp)
-    
-    jq \
-      ".applications[\"${binary_name}\"].update_available = true | \
-       .applications[\"${binary_name}\"].staged_path = \"${staging_path}\" | \
-       .applications[\"${binary_name}\"].current_version = \"${latest_version}\"" \
-      "$STATE_FILE" > "$temp_state_file"
-
-    mv "$temp_state_file" "$STATE_FILE"
-
-    echo "SUCCESS: ${binary_name} updated to ${latest_version} and staged."
+abort() {
+    log "ERROR: $1"
+    exit 1
 }
 
-for binary in "${BINARIES_TO_UPDATE[@]}"; do
-    echo "---"
-    check_one_binary "${binary}"
-done
+init_state_file() {
+    if [ ! -f "$STATE_FILE" ]; then
+        log "INFO: State file not found. Creating new one at ${STATE_FILE}"
+        jq -n '{
+            "notify_after": 0,
+            "applications": {
+                "amaru": {"current_version": "v0.0.0", "update_available": false, "staged_path": ""},
+                "amaru-pi": {"current_version": "v0.0.0", "update_available": false, "staged_path": ""},
+                "amaru-doctor": {"current_version": "v0.0.0", "update_available": false, "staged_path": ""}
+            }
+        }' > "$STATE_FILE"
+    fi
+}
 
-echo "---"
-echo "All update checks are complete."
+fetch_latest_release_json() {
+    local repo="$1"
+    local api_url="https://api.github.com/repos/${repo}/releases/latest"
+    curl -s --fail --retry 3 --max-time 15 "$api_url" || return 1
+}
+
+extract_release_info() {
+    local release_json="$1"
+    local binary_name="$2"
+
+    local latest_version
+    latest_version=$(echo "$release_json" | jq -r '.tag_name')
+    local download_url
+    download_url=$(echo "$release_json" | jq -r ".assets[] | select(.name | contains(\"${binary_name}\") and contains(\"aarch64\")) | .browser_download_url")
+    local checksum_url
+    checksum_url=$(echo "$release_json" | jq -r ".assets[] | select(.name | endswith(\"checksums.txt\")) | .browser_download_url")
+
+    [[ -n "$latest_version" && -n "$download_url" && -n "$checksum_url" ]] || return 1
+
+    echo "${latest_version}|${download_url}|${checksum_url}"
+}
+
+verify_checksum() {
+    local binary_name="$1"
+    local archive="$2"
+    local checksum_file="$3"
+
+    local expected
+    expected=$(grep "${binary_name}" "$checksum_file" | awk '{print $1}')
+    local actual
+    actual=$(sha256sum "$archive" | awk '{print $1}')
+
+    [[ "$expected" == "$actual" ]]
+}
+
+stage_binary() {
+    local binary_name="$1"
+    local archive="$2"
+    local staging_path="${STAGING_DIR}/${binary_name}.new"
+
+    tar -xzf "$archive" -C "$STAGING_DIR"
+    if [ ! -f "${STAGING_DIR}/${binary_name}" ]; then
+        abort "Extracted file for ${binary_name} missing or misnamed."
+    fi
+
+    mv "${STAGING_DIR}/${binary_name}" "$staging_path"
+    chmod +x "$staging_path"
+    echo "$staging_path"
+}
+
+update_state_file() {
+    local binary_name="$1"
+    local version="$2"
+    local staged_path="$3"
+
+    local tmp_state
+    tmp_state=$(mktemp)
+    jq \
+      ".applications[\"${binary_name}\"].update_available = true |
+       .applications[\"${binary_name}\"].staged_path = \"${staged_path}\" |
+       .applications[\"${binary_name}\"].current_version = \"${version}\"" \
+      "$STATE_FILE" > "$tmp_state"
+    mv "$tmp_state" "$STATE_FILE"
+}
+
+check_one_binary() {
+    local binary_name="$1"
+    local repo="${GITHUB_REPOS[$binary_name]}"
+    local staging_path="${STAGING_DIR}/${binary_name}.new"
+
+    log "INFO: Checking ${binary_name}..."
+
+    local current_version
+    current_version=$(jq -r ".applications[\"${binary_name}\"].current_version" "$STATE_FILE" 2>/dev/null || echo "v0.0.0")
+    log "INFO: Current version: ${current_version}"
+
+    local release_json
+    release_json=$(fetch_latest_release_json "$repo") || { log "WARN: Failed to fetch release info."; return; }
+
+    local info
+    info=$(extract_release_info "$release_json" "$binary_name") || { log "WARN: Missing assets for ${binary_name}."; return; }
+
+    IFS='|' read -r latest_version download_url checksum_url <<< "$info"
+    log "INFO: Latest version: ${latest_version}"
+
+    [[ "$current_version" == "$latest_version" ]] && { log "INFO: ${binary_name} is up to date."; return; }
+
+    log "INFO: Downloading new assets..."
+    local archive="/tmp/${binary_name}_latest.tar.gz"
+    local checksum_file="/tmp/${binary_name}_checksums.txt"
+    curl -sL -o "$archive" "$download_url"
+    curl -sL -o "$checksum_file" "$checksum_url"
+
+    verify_checksum "$binary_name" "$archive" "$checksum_file" || { abort "Checksum mismatch for ${binary_name}."; }
+
+    log "INFO: Checksum verified."
+    local staged
+    staged=$(stage_binary "$binary_name" "$archive")
+    rm -f "$archive" "$checksum_file"
+
+    update_state_file "$binary_name" "$latest_version" "$staged"
+    log "SUCCESS: ${binary_name} staged at ${staged} (version ${latest_version})."
+}
+
+main() {
+    init_state_file
+    for binary in "${BINARIES_TO_UPDATE[@]}"; do
+        echo "---"
+        check_one_binary "$binary"
+    done
+    log "INFO: All update checks complete."
+}
+
+main "$@"
