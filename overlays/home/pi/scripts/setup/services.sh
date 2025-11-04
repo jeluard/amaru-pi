@@ -2,6 +2,19 @@
 
 set -euo pipefail
 
+run_cmd() {
+    if [[ $EUID -ne 0 ]]; then
+        sudo "$@"
+    else
+        "$@"
+    fi
+}
+
+reload_systemd() {
+    echo "🔁 Reloading systemd daemon..."
+    run_cmd systemctl daemon-reload
+}
+
 enable_service() {
     local service_name="$1"
 
@@ -10,21 +23,13 @@ enable_service() {
         return 1
     fi
 
-    # Use sudo only if not running as root
-    local sudo_cmd=""
-    if [[ $EUID -ne 0 ]]; then
-        sudo_cmd="sudo"
-    fi
-
-    echo "🔁 Reloading systemd daemon..."
-    $sudo_cmd systemctl daemon-reload
-
     if ! systemctl is-enabled --quiet "$service_name"; then
         echo "➡️ Enabling $service_name..."
-        $sudo_cmd systemctl enable "$service_name"
+        run_cmd systemctl enable "$service_name"
     fi
 }
 
+reload_systemd
 enable_service amaru
 enable_service amaru-pi
 enable_service splash
