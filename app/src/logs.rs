@@ -1,19 +1,104 @@
-use serde::Deserialize;
+use LogLevel::*;
+use serde::{Deserialize, Serialize};
+#[cfg(not(feature = "display_hat"))]
+use std::time::{SystemTime, UNIX_EPOCH};
+use std::{cmp::Ordering, fmt};
+
 #[cfg(feature = "display_hat")]
 use std::{
     io::{BufRead, BufReader},
     process::{Command, Stdio},
 };
 
-#[derive(Debug, Deserialize)]
-struct LogEntry {
-    fields: Fields,
+#[derive(Clone, Copy, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(rename_all = "UPPERCASE")]
+pub enum LogLevel {
+    TRACE,
+    DEBUG,
+    #[default]
+    INFO,
+    WARN,
+    ERROR,
 }
 
-#[derive(Debug, Deserialize)]
-struct Fields {
+impl fmt::Display for LogLevel {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            TRACE => write!(f, "TRACE"),
+            DEBUG => write!(f, "DEBUG"),
+            INFO => write!(f, "INFO"),
+            WARN => write!(f, "WARN"),
+            ERROR => write!(f, "ERROR"),
+        }
+    }
+}
+
+impl Ord for LogLevel {
+    fn cmp(&self, other: &Self) -> Ordering {
+        let rank = |level: &LogLevel| match level {
+            ERROR => 5,
+            WARN => 4,
+            INFO => 3,
+            DEBUG => 2,
+            TRACE => 1,
+        };
+        rank(self).cmp(&rank(other))
+    }
+}
+
+impl PartialOrd for LogLevel {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+#[derive(Debug, Default, Deserialize, Serialize)]
+pub struct LogEntry {
+    pub level: LogLevel,
+    pub message: Option<String>,
+    pub fields: Option<Fields>,
+}
+
+#[derive(Debug, Default, Deserialize, Serialize)]
+pub struct Fields {
     message: String,
     tip: Option<String>,
+}
+
+#[cfg(not(feature = "display_hat"))]
+fn random_index(n: u64, max: usize) -> usize {
+    n as usize % max
+}
+
+#[cfg(not(feature = "display_hat"))]
+fn random_log_entry() -> LogEntry {
+    const LEVELS: [LogLevel; 5] = [ERROR, WARN, INFO, DEBUG, TRACE];
+    const MESSAGES: [&str; 10] = [
+        "Initializing system",
+        "Connection established",
+        "User login succeeded",
+        "File not found",
+        "Database timeout",
+        "Processing request",
+        "Cache miss",
+        "Low disk space",
+        "Reconnected to server",
+        "Shutdown complete",
+    ];
+
+    let n = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_secs();
+    let level = LEVELS[random_index(n, LEVELS.len())];
+    let message = MESSAGES[random_index(n, MESSAGES.len())];
+    let message = Some(format!("{} #{}", message, n % 1000));
+
+    LogEntry {
+        level,
+        message,
+        fields: None,
+    }
 }
 
 pub struct JournalReader {
@@ -39,7 +124,7 @@ impl JournalReader {
 
     #[cfg(not(feature = "display_hat"))]
     pub fn next_lines(&mut self) -> anyhow::Result<Vec<String>> {
-        Ok(vec![])
+        Ok(vec![serde_json::to_string(&random_log_entry()).unwrap()])
     }
 
     #[cfg(feature = "display_hat")]
@@ -87,11 +172,16 @@ impl JournalReader {
     }
 }
 
-pub fn extract_tip_changed(line: &str) -> Option<u64> {
+pub fn extract_json(line: &str) -> Option<LogEntry> {
     let json_part = line.find('{').map(|i| &line[i..])?;
-    let entry: LogEntry = serde_json::from_str(json_part).ok()?;
-    if entry.fields.message == "tip_changed"
-        && let Some(tip) = entry.fields.tip
+    serde_json::from_str(json_part).unwrap()
+}
+
+pub fn extract_tip_changed(line: &str) -> Option<u64> {
+    let entry = extract_json(line)?;
+    if let Some(fields) = entry.fields
+        && fields.message == "tip_changed"
+        && let Some(tip) = fields.tip
         && let Some(slot_str) = tip.split('.').next()
     {
         return slot_str.parse::<u64>().ok();

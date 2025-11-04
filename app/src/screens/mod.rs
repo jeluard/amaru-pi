@@ -43,14 +43,23 @@ impl Display for Kind {
 }
 
 pub struct State {
-    elapsed: Duration,
+    frame_count: u64,
+    elapsed_since_startup: Duration,
+    elapsed_since_last_frame: Duration,
     network_status: NetworkStatus,
 }
 
 impl State {
-    pub fn new(elapsed: Duration, network_status: NetworkStatus) -> Self {
+    pub fn new(
+        frame_count: u64,
+        elapsed_since_last_frame: Duration,
+        elapsed_since_startup: Duration,
+        network_status: NetworkStatus,
+    ) -> Self {
         State {
-            elapsed,
+            frame_count,
+            elapsed_since_startup,
+            elapsed_since_last_frame,
             network_status,
         }
     }

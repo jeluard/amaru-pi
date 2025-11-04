@@ -80,7 +80,7 @@ impl Screen for ExitScreen {
     }
 
     fn display(&mut self, state: State, frame: &mut Frame) -> bool {
-        self.on_tick(state.elapsed);
+        self.on_tick(state.elapsed_since_last_frame);
 
         match self.stage {
             ExitStage::ShowingText => {

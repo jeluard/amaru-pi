@@ -16,7 +16,6 @@ pub struct LogoScreen {
     logo_area: Option<Rect>,
     delay_explosion: Duration,
     splash_duration: Duration,
-    time_in_stage: Duration,
 }
 
 const LOGO: &str = indoc::indoc! {"
@@ -33,7 +32,6 @@ impl LogoScreen {
             logo_area: None,
             delay_explosion,
             splash_duration,
-            time_in_stage: Duration::from_millis(0),
         }
     }
 
@@ -76,9 +74,7 @@ impl Screen for LogoScreen {
     }
 
     fn display(&mut self, state: State, frame: &mut Frame) -> bool {
-        self.on_tick(state.elapsed, frame);
-
-        self.time_in_stage += state.elapsed;
+        self.on_tick(state.elapsed_since_last_frame, frame);
 
         let area = frame.area();
         let vertical = Layout::default()
@@ -107,10 +103,10 @@ impl Screen for LogoScreen {
         frame.render_widget(&mut *self, centered);
 
         // After first render, you may trigger the explosion
-        if !self.triggered && self.time_in_stage >= self.delay_explosion {
+        if !self.triggered && state.elapsed_since_startup >= self.delay_explosion {
             self.trigger_explosion();
         }
 
-        self.time_in_stage <= (self.delay_explosion + self.splash_duration)
+        state.elapsed_since_startup <= (self.delay_explosion + self.splash_duration)
     }
 }
