@@ -11,10 +11,10 @@ SSH_OPTS="${SSH_OPTS:-}"
 BUILD_ASSETS="${BUILD_ASSETS:-false}"
 RUN_SETUP="${RUN_SETUP:-true}"
 
-if [[ -n "$BUILD_ASSETS" ]]; then
+if [[ "$BUILD_ASSETS" == true ]]; then
   ${HELPER_DIR}/build-assets.sh
 else
-  echo "⚠️ Skipping building assets (BUILD_ASSETS not set)"
+  echo "⚠️ Skipping building assets ($BUILD_ASSETS not set)"
 fi
 
 ${HELPER_DIR}/sync-overlays.sh
