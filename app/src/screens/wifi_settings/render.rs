@@ -27,7 +27,7 @@ impl Screen for WiFiSettingsScreen {
         false
     }
 
-    fn display(&mut self, _state: State, frame: &mut Frame) -> bool {
+    fn display(&mut self, _state: State, frame: &mut Frame, area: Rect) -> bool {
         let chunks = Layout::default()
             .direction(Direction::Vertical)
             .constraints([
@@ -37,7 +37,7 @@ impl Screen for WiFiSettingsScreen {
                 Constraint::Length(3), // Password field + Button
                 Constraint::Min(0),    // Keyboard
             ])
-            .split(frame.area());
+            .split(area);
 
         self.render_instructions(frame, chunks[0]);
         self.render_help_text(frame, chunks[1]);

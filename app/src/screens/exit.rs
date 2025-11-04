@@ -79,7 +79,7 @@ impl Screen for ExitScreen {
         Kind::Exit
     }
 
-    fn display(&mut self, state: State, frame: &mut Frame) -> bool {
+    fn display(&mut self, state: State, frame: &mut Frame, area: Rect) -> bool {
         self.on_tick(state.elapsed_since_last_frame);
 
         match self.stage {
@@ -91,7 +91,7 @@ impl Screen for ExitScreen {
                     Constraint::Length(9),
                     Constraint::Fill(1),
                 ])
-                .split(frame.area());
+                .split(area);
 
                 let horizontal_chunks = Layout::horizontal([
                     Constraint::Fill(1),
@@ -103,7 +103,7 @@ impl Screen for ExitScreen {
                 frame.render_widget(text, horizontal_chunks[1]);
             }
             ExitStage::ShowingClear => {
-                frame.render_widget(Clear, frame.area());
+                frame.render_widget(Clear, area);
             }
             ExitStage::Finished => {
                 // The main loop will catch this and exit

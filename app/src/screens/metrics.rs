@@ -115,10 +115,10 @@ impl crate::screens::Screen for MetricsScreen {
         Kind::Metrics
     }
 
-    fn display(&mut self, _state: State, frame: &mut Frame) -> bool {
+    fn display(&mut self, _state: State, frame: &mut Frame, area: Rect) -> bool {
         self.on_tick(frame);
 
-        self.render_animated_chart(frame, frame.area());
+        self.render_animated_chart(frame, area);
 
         true
     }

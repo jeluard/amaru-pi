@@ -139,7 +139,7 @@ impl ScreenFlow {
     fn display(&mut self, state: State, frame: &mut Frame) {
         if !self
             .screen_mut(self.current_screen_kind)
-            .display(state, frame)
+            .display(state, frame, frame.area())
         {
             // Screen display is finished, move to next screen
             self.update_screen(self.next_kind(self.current_screen_kind));

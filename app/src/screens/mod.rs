@@ -1,4 +1,4 @@
-use ratatui::Frame;
+use ratatui::{Frame, layout::Rect};
 use std::{
     fmt::{self, Display},
     time::Duration,
@@ -82,7 +82,7 @@ pub trait Screen {
     /// Displays this screen.
     /// Will be called again while `true` is returned. If `false`, triggers the
     /// logic to change screen.
-    fn display(&mut self, state: State, frame: &mut Frame) -> bool;
+    fn display(&mut self, state: State, area: &mut Frame, area: Rect) -> bool;
 
     // Called right after the last time the Screen is shown
     fn exit(&mut self) {}

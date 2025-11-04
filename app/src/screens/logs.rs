@@ -89,8 +89,7 @@ impl crate::screens::Screen for LogsScreen {
         Kind::Logs
     }
 
-    fn display(&mut self, state: State, frame: &mut Frame) -> bool {
-        let area = frame.area();
+    fn display(&mut self, state: State, frame: &mut Frame, area: Rect) -> bool {
         if state.frame_count.is_multiple_of(100) {
             let logs = self
                 .reader
@@ -115,7 +114,7 @@ impl crate::screens::Screen for LogsScreen {
                     Constraint::Length(10),
                     Constraint::Percentage(45),
                 ])
-                .split(frame.area());
+                .split(area);
 
             let para = Paragraph::new("No logs")
                 .alignment(Alignment::Center)

@@ -35,8 +35,7 @@ impl LogoScreen {
         }
     }
 
-    fn on_tick(&mut self, elapsed: Duration, frame: &mut Frame) {
-        let area = frame.area();
+    fn on_tick(&mut self, elapsed: Duration, frame: &mut Frame, area: Rect) {
         self.effects
             .process_effects(elapsed.into(), frame.buffer_mut(), area);
     }
@@ -73,10 +72,9 @@ impl Screen for LogoScreen {
         Kind::Logo
     }
 
-    fn display(&mut self, state: State, frame: &mut Frame) -> bool {
-        self.on_tick(state.elapsed_since_last_frame, frame);
+    fn display(&mut self, state: State, frame: &mut Frame, area: Rect) -> bool {
+        self.on_tick(state.elapsed_since_last_frame, frame, area);
 
-        let area = frame.area();
         let vertical = Layout::default()
             .direction(Direction::Vertical)
             .constraints([

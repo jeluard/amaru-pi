@@ -1,6 +1,6 @@
 use amaru_kernel::Slot;
 use ratatui::Frame;
-use ratatui::layout::{Constraint, Direction, Layout};
+use ratatui::layout::{Constraint, Direction, Layout, Rect};
 use ratatui::style::Stylize;
 use ratatui::text::Line;
 use std::time::{Duration, Instant};
@@ -51,7 +51,7 @@ impl crate::screens::Screen for TipScreen {
         Kind::Tip
     }
 
-    fn display(&mut self, state: State, frame: &mut Frame) -> bool {
+    fn display(&mut self, state: State, frame: &mut Frame, area: Rect) -> bool {
         let now = Instant::now();
         if now - self.last_refresh > Duration::from_secs(1) {
             self.last_refresh = now;
@@ -73,7 +73,7 @@ impl crate::screens::Screen for TipScreen {
                 Constraint::Percentage(40),
                 Constraint::Percentage(30),
             ])
-            .split(frame.area());
+            .split(area);
 
         let text = BigText::builder()
             .pixel_size(PixelSize::Quadrant)

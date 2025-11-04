@@ -1,7 +1,7 @@
 use qrcode::QrCode;
 use ratatui::{
     Frame,
-    layout::{Alignment, Constraint, Flex, Layout},
+    layout::{Alignment, Constraint, Flex, Layout, Rect},
     style::{Color, Style},
     text::{Line, Span},
     widgets::Paragraph,
@@ -19,7 +19,7 @@ impl crate::screens::Screen for ScanScreen {
         Kind::Scan
     }
 
-    fn display(&mut self, _state: State, frame: &mut Frame) -> bool {
+    fn display(&mut self, _state: State, frame: &mut Frame, area: Rect) -> bool {
         let [_, top_area, bottom_area, _] = Layout::vertical([
             Constraint::Percentage(5),
             Constraint::Percentage(85),
@@ -27,7 +27,7 @@ impl crate::screens::Screen for ScanScreen {
             Constraint::Percentage(5),
         ])
         .flex(Flex::Center)
-        .areas(frame.area());
+        .areas(area);
 
         let [top_area] = Layout::horizontal([Constraint::Percentage(80)])
             .flex(Flex::Center)
