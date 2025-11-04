@@ -58,30 +58,27 @@ sudo dphys-swapfile swapon
 Make sure you have a PI running with your PIOS distribution of choice accessible over ssh (via env var `SSH_REMOTE`).
 
 ```shell
-export SSH_REMOTE=`pi@pi.local`
-
 # First create the main SD card image that will be flashed on all devices
 
-## Build all the files that will end up in the image (binaries, amaru dbs, ...)
-./scripts/build-assets.sh
+# 1. Make sure you have a PI running and accessible via ssh at `SSH_REMOTE`. It should have been setup with an official PIOS image.
 
-## Setup the remote PI (sync all configuration files, binaries, etc)
+export SSH_REMOTE=pi@pi.local
+
+## 2. Setup the remote PI (sync all configuration files, binaries, etc)
 ./scripts/setup.sh
 
-## Dump the SD card content to a local file
+## 3. Dump the SD card content to a local file
 ## You need to unplug the SD card and be prepared to plug it to your local machine
 ./scripts/dump-image.sh
 
-## Then flash the image on a new SD card
-## You can now start your PI with the new card
+## 4. Then flash the image on a new SD card
+## You can now start your PI with the new card instead of a regular image
 
 
-# Optionnally configure your running PI with device specifics info (wifi, claim words, ...)
+# 5. Optionnally configure your running PI with device specifics info (wifi, claim words, ...)
 
 export AMARU_WORDS="turtle-red-car"
 export AMARU_SSID_NAME="my-wifi"
 export AMARU_SSID_PASSWORD="password"
 ./scripts/configure.sh
-
-# Alternatively if you don't need to build an image, you can just call `configure.sh` right after `setup.sh`
 ```
