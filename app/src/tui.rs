@@ -178,11 +178,18 @@ impl NetworkStatusCache {
 }
 
 async fn create_state(
-    elapsed: Duration,
+    frame_count: u64,
+    elapsed_since_last_frame: Duration,
+    elapsed_since_startup: Duration,
     network_status_cache: &mut NetworkStatusCache,
 ) -> Result<State> {
     let network_status = network_status_cache.get().await;
-    Ok(State::new(elapsed, network_status))
+    Ok(State::new(
+        frame_count,
+        elapsed_since_last_frame,
+        elapsed_since_startup,
+        network_status,
+    ))
 }
 
 pub async fn run() -> Result<()> {
@@ -191,12 +198,15 @@ pub async fn run() -> Result<()> {
     #[cfg(feature = "simulator")]
     let (backend, input_rx) = backends::simulator::setup_simulator_and_input();
     let mut terminal = Terminal::new(backend)?;
+    let startup = Instant::now();
+    let mut frame_count = 0;
     let mut last_loop = Instant::now();
 
     let mut screen_flow = ScreenFlow::new();
     let mut connectivity_cache = NetworkStatusCache::new(Duration::from_secs(5));
     let running = Arc::new(AtomicBool::new(true));
     while running.load(Ordering::SeqCst) {
+        frame_count += 1;
         let elapsed_since_last_frame = last_loop.elapsed();
         last_loop = Instant::now();
 
@@ -208,7 +218,13 @@ pub async fn run() -> Result<()> {
             running.store(false, Ordering::SeqCst);
         }
 
-        let state = create_state(elapsed_since_last_frame, &mut connectivity_cache).await?;
+        let state = create_state(
+            frame_count,
+            elapsed_since_last_frame,
+            startup.elapsed(),
+            &mut connectivity_cache,
+        )
+        .await?;
         terminal.draw(|frame| {
             screen_flow.display(state, frame);
         })?;
