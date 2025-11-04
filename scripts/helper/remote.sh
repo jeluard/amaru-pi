@@ -19,6 +19,10 @@ run_remote_script() {
     local opts="$1"; shift
     local script="$1"; shift
 
+    local env_vars=()
+    local script_args=()
+
+
     # Iterate remaining arguments
     for arg in "$@"; do
         if [[ "$arg" =~ ^[A-Z_][A-Z0-9_]*$ ]]; then
@@ -32,15 +36,18 @@ run_remote_script() {
 
     # Build remote environment assignment
     local remote_env=""
-    for var in "${env_vars[@]}"; do
-        if [[ -n "${!var-}" ]]; then
-            # Safely quote values
-            remote_env+="$var='${!var//\'/\'\\\'\'}' "
-        else
-            echo "⚠️ Local env var $var is not set"
-            exit 1
-        fi
-    done
+
+    if ((${#env_vars[@]})); then
+        for var in "${env_vars[@]:-}"; do
+            if [[ -n "${!var-}" ]]; then
+                # Safely quote values
+                remote_env+="$var='${!var//\'/\'\\\'\'}' "
+            else
+                echo "⚠️ Local env var $var is not set"
+                exit 1
+            fi
+        done
+    fi
 
     # Run the remote script with the environment
     ssh ${opts} "$remote" "$remote_env SETUP_SCRIPT='$script'; \
