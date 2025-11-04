@@ -55,14 +55,13 @@ impl PartialOrd for LogLevel {
 #[derive(Debug, Default, Deserialize, Serialize)]
 pub struct LogEntry {
     pub level: LogLevel,
-    pub message: Option<String>,
     pub fields: Option<Fields>,
 }
 
 #[derive(Debug, Default, Deserialize, Serialize)]
 pub struct Fields {
-    message: String,
-    tip: Option<String>,
+    pub message: String,
+    pub tip: Option<String>,
 }
 
 #[cfg(not(feature = "display_hat"))]
@@ -92,12 +91,11 @@ fn random_log_entry() -> LogEntry {
         .as_secs();
     let level = LEVELS[random_index(n, LEVELS.len())];
     let message = MESSAGES[random_index(n, MESSAGES.len())];
-    let message = Some(format!("{} #{}", message, n % 1000));
+    let message = format!("{} #{}", message, n % 1000);
 
     LogEntry {
         level,
-        message,
-        fields: None,
+        fields: Some(Fields { message, tip: None }),
     }
 }
 

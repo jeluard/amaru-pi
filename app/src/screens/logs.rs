@@ -126,7 +126,11 @@ impl crate::screens::Screen for LogsScreen {
                 .logs
                 .iter()
                 .map(|log| {
-                    let msg = log.message.clone().unwrap_or_default();
+                    let msg = log
+                        .fields
+                        .as_ref()
+                        .map(|f| f.message.clone())
+                        .unwrap_or_default();
                     let line = Line::from(vec![
                         Span::raw("["),
                         Span::styled(
