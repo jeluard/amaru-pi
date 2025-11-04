@@ -52,7 +52,7 @@ pub async fn handle() -> Result<(), Box<dyn Error>> {
                 }
                 WifiCommands::CheckConnectivity => {
                     let network_status = wifi::check_network_status()?;
-                    info!("{:?}", network_status);
+                    println!("{:?}", network_status);
                 }
                 WifiCommands::Up => wifi::up_connection(Duration::from_secs(30))?,
                 WifiCommands::Down => wifi::down_connection(Duration::from_secs(30))?,
