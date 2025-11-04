@@ -10,6 +10,7 @@ use crate::screens::{Kind, Screen, State};
 use crate::wifi::{Connectivity, NetworkState, NetworkStatus, check_network_status};
 use anyhow::Result;
 use ratatui::prelude::*;
+use ratatui::widgets::{Block, Borders, Paragraph};
 use std::collections::HashSet;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -19,6 +20,46 @@ struct ScreenFlow {
     screens: Vec<Box<dyn Screen>>,
     order: Vec<Kind>,
     pub current_screen_kind: Kind,
+}
+
+struct TopBar<'a> {
+    title: &'a str,
+    pixel_color: Color,
+    background: Color,
+}
+
+impl<'a> Widget for TopBar<'a> {
+    fn render(self, area: Rect, buf: &mut Buffer) {
+        let [_pad_left, left, _spacer, right, _pad_right] = Layout::horizontal([
+            Constraint::Length(1),
+            Constraint::Min(1),
+            Constraint::Length(1),
+            Constraint::Length(1),
+            Constraint::Length(1),
+        ])
+        .areas(area);
+
+        Block::default()
+            .style(Style::default().bg(self.background))
+            .render(area, buf);
+
+        Paragraph::new(Line::from(Span::styled(
+            self.title,
+            Style::default()
+                .fg(Color::White)
+                .bg(self.background)
+                .add_modifier(Modifier::BOLD),
+        )))
+        .block(Block::default().borders(Borders::NONE))
+        .render(left, buf);
+
+        Paragraph::new(Span::styled(
+            "●",
+            Style::default().fg(self.pixel_color),
+        ))
+        .block(Block::default().borders(Borders::NONE))
+        .render(right, buf);
+    }
 }
 
 impl ScreenFlow {
@@ -137,9 +178,25 @@ impl ScreenFlow {
     }
 
     fn display(&mut self, state: State, frame: &mut Frame) {
+        let [top_area, body] =
+            Layout::vertical([Constraint::Length(1), Constraint::Min(0)]).areas(frame.area());
+
+        let pixel_color = match state.network_status.connectivity {
+            Connectivity::Full => Color::Green,
+            Connectivity::None => Color::Red,
+            _ => Color::Yellow,
+        };
+        let top_bar = TopBar {
+            title: "Amaru",
+            pixel_color,
+            background: Color::Black,
+        };
+
+        frame.render_widget(top_bar, top_area);
+
         if !self
             .screen_mut(self.current_screen_kind)
-            .display(state, frame, frame.area())
+            .display(state, frame, body)
         {
             // Screen display is finished, move to next screen
             self.update_screen(self.next_kind(self.current_screen_kind));

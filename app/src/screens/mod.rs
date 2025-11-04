@@ -43,10 +43,10 @@ impl Display for Kind {
 }
 
 pub struct State {
-    frame_count: u64,
-    elapsed_since_startup: Duration,
-    elapsed_since_last_frame: Duration,
-    network_status: NetworkStatus,
+    pub frame_count: u64,
+    pub elapsed_since_startup: Duration,
+    pub elapsed_since_last_frame: Duration,
+    pub network_status: NetworkStatus,
 }
 
 impl State {
