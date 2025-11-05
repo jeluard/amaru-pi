@@ -54,6 +54,15 @@ sudo dphys-swapfile swapon
 
 # Create the SD image
 
+The overall flow to create a flashable image consists of:
+
+* flash the PI with a stock image (e.g. PIOS lite)
+* `setup` the PI
+* copy the resulting SD card to your local machine into image format
+
+At this stage you can flash the image to new cards.
+Optionnaly each idividual PI can be `configured`.
+
 `overlays` contains all the file that will be added on top of a regular PIOS distribution.
 Make sure you have a PI running with your PIOS distribution of choice accessible over ssh (via env var `SSH_REMOTE`).
 
