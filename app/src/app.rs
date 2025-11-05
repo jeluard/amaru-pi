@@ -3,27 +3,29 @@ use crate::frame::FrameState;
 use crate::network_status::NetworkStatusCache;
 use crate::screen_flow::ScreenFlow;
 use crate::screens::{AppContext, SystemState};
-use crate::systemd::{self, ServiceInfo};
+use crate::systemd::ServiceInfo;
 use ratatui::prelude::*;
 use std::time::{Duration, Instant};
 
-pub enum AppMsg {
+pub enum AppEvent {
     Tick,
     Input(InputEvent),
 }
 
+#[derive(PartialEq, Eq)]
 pub enum AppAction {
+    CheckNetworkStatus,
+    CheckAmaruStatus,
     Quit,
-    None,
 }
 
 pub struct App {
     frame_state: FrameState,
     screen_flow: ScreenFlow,
-    connectivity_cache: NetworkStatusCache,
+    pub connectivity_cache: NetworkStatusCache,
     amaru_status_last_check: Instant,
     amaru_status_interval: Duration,
-    system_state: SystemState,
+    pub system_state: SystemState,
 }
 
 impl Default for App {
@@ -47,26 +49,20 @@ impl Default for App {
 }
 
 impl App {
-    pub async fn update(&mut self, msg: AppMsg) -> AppAction {
+    pub fn update(&mut self, msg: AppEvent) -> Vec<AppAction> {
         match msg {
-            AppMsg::Tick => {
+            AppEvent::Tick => {
                 self.frame_state.update();
-                self.system_state.network_status = self.connectivity_cache.get().await;
-
                 if self.amaru_status_last_check.elapsed() >= self.amaru_status_interval {
-                    self.system_state.amaru_status = tokio::task::spawn_blocking(|| {
-                        systemd::get_systemd_service_info("amaru").unwrap_or_default()
-                    })
-                    .await
-                    .unwrap_or_default();
                     self.amaru_status_last_check = Instant::now();
+                    return vec![AppAction::CheckNetworkStatus, AppAction::CheckAmaruStatus];
                 }
             }
-            AppMsg::Input(event) => {
+            AppEvent::Input(event) => {
                 if !self.screen_flow.handle_input(event)
                     && let (ButtonId::B, ButtonPress::Double) = (event.id, event.press_type)
                 {
-                    return AppAction::Quit;
+                    return vec![AppAction::Quit];
                 }
             }
         }
@@ -76,7 +72,8 @@ impl App {
             system: &self.system_state,
         };
         self.screen_flow.update(ctx);
-        AppAction::None
+
+        Vec::new()
     }
 
     pub fn draw(&self, frame: &mut Frame) {

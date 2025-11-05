@@ -1,4 +1,5 @@
-use crate::app::{App, AppAction, AppMsg};
+use crate::actions::handle_action;
+use crate::app::{App, AppAction, AppEvent};
 use crate::backends;
 use anyhow::Result;
 use ratatui::Terminal;
@@ -11,19 +12,29 @@ pub async fn run() -> Result<()> {
     #[cfg(feature = "simulator")]
     let (backend, input_rx) = backends::simulator::setup_simulator_and_input();
     let mut terminal = Terminal::new(backend)?;
-
     let mut app = App::default();
     let running = Arc::new(AtomicBool::new(true));
+
+    let mut events: Vec<AppEvent> = Vec::with_capacity(4);
     while running.load(Ordering::SeqCst) {
-        if let AppAction::Quit = app.update(AppMsg::Tick).await {
-            running.store(false, Ordering::SeqCst);
+        events.push(AppEvent::Tick);
+        while let Ok(event) = input_rx.try_recv() {
+            events.push(AppEvent::Input(event));
         }
 
-        // TODO multiple events
-        if let Ok(event) = input_rx.try_recv()
-            && let AppAction::Quit = app.update(AppMsg::Input(event)).await
-        {
-            running.store(false, Ordering::SeqCst);
+        for event in events.drain(..) {
+            let actions = app.update(event);
+            for action in actions {
+                if action == AppAction::Quit {
+                    running.store(false, Ordering::SeqCst);
+                    break;
+                }
+                handle_action(&mut app, action).await
+            }
+        }
+
+        if !running.load(Ordering::SeqCst) {
+            break;
         }
 
         terminal.draw(|frame| {
