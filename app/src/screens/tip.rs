@@ -51,7 +51,7 @@ impl crate::screens::Screen for TipScreen {
         Kind::Tip
     }
 
-    fn display(&mut self, state: State, frame: &mut Frame, area: Rect) -> bool {
+    fn update(&mut self, _state: State) {
         let now = Instant::now();
         if now - self.last_refresh > Duration::from_secs(1) {
             self.last_refresh = now;
@@ -65,7 +65,9 @@ impl crate::screens::Screen for TipScreen {
                 self.update_slot((*tip).into());
             }
         }
+    }
 
+    fn display(&self, state: State, frame: &mut Frame, area: Rect) -> bool {
         let chunks = Layout::default()
             .direction(Direction::Vertical)
             .constraints([

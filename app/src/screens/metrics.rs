@@ -101,7 +101,7 @@ impl Iterator for SinSignal {
 }
 
 impl MetricsScreen {
-    fn on_tick(&mut self, _frame: &mut Frame) {
+    fn on_tick(&mut self) {
         self.data2.drain(0..10);
         self.data2.extend(self.signal2.by_ref().take(10));
 
@@ -115,11 +115,12 @@ impl crate::screens::Screen for MetricsScreen {
         Kind::Metrics
     }
 
-    fn display(&mut self, _state: State, frame: &mut Frame, area: Rect) -> bool {
-        self.on_tick(frame);
+    fn update(&mut self, _state: State) {
+        self.on_tick();
+    }
 
+    fn display(&self, _state: State, frame: &mut Frame, area: Rect) -> bool {
         self.render_animated_chart(frame, area);
-
         true
     }
 }

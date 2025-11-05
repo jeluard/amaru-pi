@@ -136,6 +136,10 @@ impl ScreenFlow {
         handled
     }
 
+    pub fn update(&mut self, state: State) {
+        self.screen_mut(self.current_screen_kind).update(state);
+    }
+
     pub fn display(&mut self, state: State, frame: &mut Frame) {
         let [top_area, body] =
             Layout::vertical([Constraint::Length(1), Constraint::Min(0)]).areas(frame.area());

@@ -1,10 +1,9 @@
+use crate::{button::InputEvent, systemd::ServiceInfo, wifi::NetworkStatus};
 use ratatui::{Frame, layout::Rect};
 use std::{
     fmt::{self, Display},
     time::Duration,
 };
-
-use crate::{button::InputEvent, systemd::ServiceInfo, wifi::NetworkStatus};
 
 pub mod color;
 pub mod exit;
@@ -42,6 +41,7 @@ impl Display for Kind {
     }
 }
 
+#[derive(Debug, Clone)]
 pub struct State {
     pub frame_count: u64,
     pub elapsed_since_startup: Duration,
@@ -82,10 +82,16 @@ pub trait Screen {
         false
     }
 
+    /// Update the screen's state. Called once per frame before display.
+    fn update(&mut self, _state: State) {
+        // Default implementation does nothing
+    }
+
     /// Displays this screen.
     /// Will be called again while `true` is returned. If `false`, triggers the
     /// logic to change screen.
-    fn display(&mut self, state: State, area: &mut Frame, area: Rect) -> bool;
+    /// Takes an immutable reference to `self`.
+    fn display(&self, state: State, frame: &mut Frame, area: Rect) -> bool;
 
     // Called right after the last time the Screen is shown
     fn exit(&mut self) {}

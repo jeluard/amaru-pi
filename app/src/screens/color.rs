@@ -53,8 +53,8 @@ impl crate::screens::Screen for ColorScreen {
         Kind::Color
     }
 
-    fn display(&mut self, _state: State, frame: &mut Frame, area: Rect) -> bool {
-        frame.render_widget(self, area);
+    fn display(&self, _state: State, _frame: &mut Frame, _area: Rect) -> bool {
+        // frame.render_widget(self, area);
         true
     }
 }
