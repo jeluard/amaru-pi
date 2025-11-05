@@ -1,5 +1,5 @@
 use crate::logs::{JournalReader, LogEntry, LogLevel, extract_json};
-use crate::screens::{Kind, ScreenAction, State};
+use crate::screens::{AppContext, Kind, ScreenAction};
 use ratatui::Frame;
 use ratatui::buffer::Buffer;
 use ratatui::layout::{Alignment, Constraint, Direction, Layout, Rect};
@@ -91,8 +91,8 @@ impl crate::screens::Screen for LogsScreen {
         Kind::Logs
     }
 
-    fn update(&mut self, state: State) -> ScreenAction {
-        if state.frame_count.is_multiple_of(100) {
+    fn update(&mut self, ac: AppContext) -> ScreenAction {
+        if ac.frame.frame_count.is_multiple_of(100) {
             let logs = self
                 .reader
                 .next_lines()
@@ -109,7 +109,7 @@ impl crate::screens::Screen for LogsScreen {
         ScreenAction::None
     }
 
-    fn display(&self, _state: State, frame: &mut Frame, area: Rect) {
+    fn display(&self, _ac: AppContext, frame: &mut Frame, area: Rect) {
         if self.logs.is_empty() {
             // Show "no logs" centered
             let chunks = Layout::default()

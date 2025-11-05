@@ -1,4 +1,4 @@
-use crate::screens::{Kind, Screen, ScreenAction, State};
+use crate::screens::{AppContext, Kind, Screen, ScreenAction};
 use indoc::indoc;
 use ratatui::{
     layout::{Constraint, Layout},
@@ -77,12 +77,12 @@ impl Screen for ExitScreen {
         Kind::Exit
     }
 
-    fn update(&mut self, state: State) -> ScreenAction {
-        self.on_tick(state.elapsed_since_last_frame);
+    fn update(&mut self, ac: AppContext) -> ScreenAction {
+        self.on_tick(ac.frame.elapsed_since_last_frame);
         ScreenAction::None
     }
 
-    fn display(&self, _state: State, frame: &mut Frame, area: Rect) {
+    fn display(&self, _ac: AppContext, frame: &mut Frame, area: Rect) {
         match self.stage {
             ExitStage::ShowingText => {
                 let text = Text::raw(EXIT_TEXT);

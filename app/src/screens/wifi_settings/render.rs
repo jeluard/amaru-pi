@@ -1,7 +1,7 @@
 use super::{ActiveField, Focus, WiFiSettingsScreen};
 use crate::{
     button::InputEvent,
-    screens::{Kind, Screen, State},
+    screens::{AppContext, Kind, Screen},
 };
 use ratatui::{
     Frame,
@@ -27,7 +27,7 @@ impl Screen for WiFiSettingsScreen {
         false
     }
 
-    fn display(&self, _state: State, frame: &mut Frame, area: Rect) {
+    fn display(&self, _ac: AppContext, frame: &mut Frame, area: Rect) {
         let chunks = Layout::default()
             .direction(Direction::Vertical)
             .constraints([

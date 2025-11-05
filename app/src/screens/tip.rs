@@ -1,5 +1,5 @@
 use crate::logs::{JournalReader, extract_tip_changed};
-use crate::screens::{Kind, ScreenAction, State};
+use crate::screens::{AppContext, Kind, ScreenAction};
 use crate::wifi::Connectivity;
 use amaru_kernel::Slot;
 use ratatui::Frame;
@@ -32,8 +32,8 @@ impl Default for TipScreen {
     }
 }
 
-fn create_lines<'a>(state: State, current_slot: Option<Slot>) -> Vec<Line<'a>> {
-    if state.network_status.connectivity != Connectivity::Full {
+fn create_lines<'a>(ac: AppContext, current_slot: Option<Slot>) -> Vec<Line<'a>> {
+    if ac.system.network_status.connectivity != Connectivity::Full {
         vec![Line::from("Not connected")]
     } else if let Some(current_slot) = current_slot {
         vec![
@@ -50,7 +50,7 @@ impl crate::screens::Screen for TipScreen {
         Kind::Tip
     }
 
-    fn update(&mut self, _state: State) -> ScreenAction {
+    fn update(&mut self, _ac: AppContext) -> ScreenAction {
         let now = Instant::now();
         if now - self.last_refresh > Duration::from_secs(1) {
             self.last_refresh = now;
@@ -67,7 +67,7 @@ impl crate::screens::Screen for TipScreen {
         ScreenAction::None
     }
 
-    fn display(&self, state: State, frame: &mut Frame, area: Rect) {
+    fn display(&self, ac: AppContext, frame: &mut Frame, area: Rect) {
         let chunks = Layout::default()
             .direction(Direction::Vertical)
             .constraints([
@@ -80,7 +80,7 @@ impl crate::screens::Screen for TipScreen {
         let text = BigText::builder()
             .pixel_size(PixelSize::Quadrant)
             .centered()
-            .lines(create_lines(state, self.current_slot))
+            .lines(create_lines(ac, self.current_slot))
             .build();
 
         frame.render_widget(text, chunks[1]);

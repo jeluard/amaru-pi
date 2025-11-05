@@ -1,4 +1,4 @@
-use crate::screens::{Kind, Screen, ScreenAction, State};
+use crate::screens::{AppContext, Kind, Screen, ScreenAction};
 use ratatui::{
     Frame,
     buffer::Buffer,
@@ -75,20 +75,20 @@ impl Screen for LogoScreen {
         Kind::Logo
     }
 
-    fn update(&mut self, state: State) -> ScreenAction {
+    fn update(&mut self, ac: AppContext) -> ScreenAction {
         // After first render, you may trigger the explosion
-        if !self.triggered && state.elapsed_since_startup >= self.delay_explosion {
+        if !self.triggered && ac.frame.elapsed_since_startup >= self.delay_explosion {
             self.trigger_explosion();
         }
-        if state.elapsed_since_startup > (self.delay_explosion + self.splash_duration) {
+        if ac.frame.elapsed_since_startup > (self.delay_explosion + self.splash_duration) {
             return ScreenAction::NextScreen;
         }
 
         ScreenAction::None
     }
 
-    fn display(&self, state: State, frame: &mut Frame, area: Rect) {
-        self.on_tick(state.elapsed_since_last_frame, frame, area);
+    fn display(&self, ac: AppContext, frame: &mut Frame, area: Rect) {
+        self.on_tick(ac.frame.elapsed_since_last_frame, frame, area);
 
         let vertical = Layout::default()
             .direction(Direction::Vertical)

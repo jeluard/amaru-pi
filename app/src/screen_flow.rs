@@ -5,7 +5,7 @@ use crate::screens::metrics::MetricsScreen;
 use crate::screens::scan::ScanScreen;
 use crate::screens::tip::TipScreen;
 use crate::screens::wifi_settings::WiFiSettingsScreen;
-use crate::screens::{Kind, Screen, ScreenAction, State};
+use crate::screens::{AppContext, Kind, Screen, ScreenAction};
 use crate::systemd::ActiveState;
 use crate::top_bar::TopBar;
 use crate::wifi::Connectivity;
@@ -144,8 +144,8 @@ impl ScreenFlow {
         handled
     }
 
-    pub fn update(&mut self, state: State) {
-        let action = self.screen_mut(self.current_screen_kind).update(state);
+    pub fn update(&mut self, ctx: AppContext) {
+        let action = self.screen_mut(self.current_screen_kind).update(ctx);
         match action {
             ScreenAction::None => { /* Do nothing */ }
             ScreenAction::NextScreen => {
@@ -154,16 +154,16 @@ impl ScreenFlow {
         }
     }
 
-    pub fn display(&self, state: State, frame: &mut Frame) {
+    pub fn display(&self, ctx: AppContext, frame: &mut Frame) {
         let [top_area, body] =
             Layout::vertical([Constraint::Length(1), Constraint::Min(0)]).areas(frame.area());
 
-        let amaru_status_color = match state.amaru_status.active_state {
+        let amaru_status_color = match ctx.system.amaru_status.active_state {
             ActiveState::Active => Color::Green,
             ActiveState::Failed => Color::Red,
             _ => Color::Yellow,
         };
-        let network_status_color = match state.network_status.connectivity {
+        let network_status_color = match ctx.system.network_status.connectivity {
             Connectivity::Full => Color::Green,
             Connectivity::None => Color::Red,
             _ => Color::Yellow,
@@ -178,6 +178,6 @@ impl ScreenFlow {
         frame.render_widget(top_bar, top_area);
 
         self.screen(self.current_screen_kind)
-            .display(state, frame, body);
+            .display(ctx, frame, body);
     }
 }
