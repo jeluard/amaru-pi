@@ -1,9 +1,11 @@
 use crate::button::{ButtonId, ButtonPress, InputEvent};
 use crate::frame::FrameState;
+use crate::modal::Modal;
 use crate::network_status::NetworkStatusCache;
 use crate::screen_flow::ScreenFlow;
 use crate::screens::{AppContext, SystemState};
 use crate::systemd::ServiceInfo;
+use crate::update::{UpdateManager, UpdateStatus};
 use ratatui::prelude::*;
 use std::time::{Duration, Instant};
 
@@ -26,6 +28,8 @@ pub struct App {
     amaru_status_last_check: Instant,
     amaru_status_interval: Duration,
     pub system_state: SystemState,
+    modal: Modal,
+    update_manager: UpdateManager,
 }
 
 impl Default for App {
@@ -44,25 +48,47 @@ impl Default for App {
             amaru_status_last_check: now - default_interval,
             amaru_status_interval: default_interval,
             system_state,
+            modal: Modal::default(),
+            update_manager: UpdateManager::new(Duration::from_secs(5)),
         }
     }
 }
 
 impl App {
     pub fn update(&mut self, msg: AppEvent) -> Vec<AppAction> {
+        let mut actions = Vec::new();
+
         match msg {
             AppEvent::Tick => {
                 self.frame_state.update();
+
+                // Amaru status check
                 if self.amaru_status_last_check.elapsed() >= self.amaru_status_interval {
                     self.amaru_status_last_check = Instant::now();
-                    return vec![AppAction::CheckNetworkStatus, AppAction::CheckAmaruStatus];
+                    actions.push(AppAction::CheckNetworkStatus);
+                    actions.push(AppAction::CheckAmaruStatus);
+                }
+
+                // Update check if no modal is active
+                if !self.modal.is_active()
+                    && let UpdateStatus::UpdateReadyToNotify =
+                        self.update_manager.check_for_update()
+                {
+                    self.modal = Modal::UpdatePopup;
                 }
             }
             AppEvent::Input(event) => {
+                // If a modal is active, it handles the input
+                if self.modal.handle_input(event, &mut self.update_manager) {
+                    // The modal handled it, don't process further
+                    return Vec::new();
+                }
+
+                // Modal not active or didn't handle, pass to screen flow
                 if !self.screen_flow.handle_input(event)
                     && let (ButtonId::B, ButtonPress::Double) = (event.id, event.press_type)
                 {
-                    return vec![AppAction::Quit];
+                    actions.push(AppAction::Quit);
                 }
             }
         }
@@ -73,7 +99,7 @@ impl App {
         };
         self.screen_flow.update(ctx);
 
-        Vec::new()
+        actions
     }
 
     pub fn draw(&self, frame: &mut Frame) {
@@ -81,6 +107,10 @@ impl App {
             frame: &self.frame_state,
             system: &self.system_state,
         };
+        // Draw the main screen first
         self.screen_flow.display(ctx, frame);
+
+        // Draw the modal on top, if active
+        self.modal.draw(frame);
     }
 }

@@ -3,8 +3,10 @@ set -euo pipefail
 
 STATE_FILE="/home/pi/.amaru_update_state.json"
 BIN_DIR="/home/pi/bin"
-TRIGGER_FILE="/home/pi/update-requested"
+TRIGGER_FILE="/home/pi/.update_requested"
 LOCK_FILE="/tmp/amaru_update.lock"
+
+declare -a MANAGED_SERVICES=("amaru-pi.service")
 
 exec 200>"$LOCK_FILE"
 flock -n 200 || { echo "ERROR: Another update is in progress."; exit 1; }
@@ -26,11 +28,13 @@ validate_state_file() {
     fi
 }
 
-stop_service() {
-    log "INFO: Stopping core service..."
-    if ! systemctl stop amaru-pi.service; then
-        abort "Failed to stop amaru-pi.service."
-    fi
+stop_services() {
+    log "INFO: Stopping all managed services..."
+    for service in "${MANAGED_SERVICES[@]}"; do
+        if ! systemctl stop "$service"; then
+            log "WARN: Failed to stop $service. Continuing..."
+        fi
+    done
 }
 
 backup_and_swap_binary() {
@@ -48,46 +52,55 @@ backup_and_swap_binary() {
     chmod +x "${BIN_DIR}/${app_name}"
 }
 
-apply_updates() {
+apply_updates_and_promote_versions() {
     local state_json="$1"
+    local new_state_json="$state_json" # Start with the original state
 
     for app_name in $(echo "$state_json" | jq -r '.applications | keys[]'); do
-        local update_available
-        update_available=$(echo "$state_json" | jq -r ".applications[\"${app_name}\"].update_available")
+        local pending_version
+        pending_version=$(echo "$state_json" | jq -r ".applications[\"${app_name}\"].pending_version")
         local staged_path
         staged_path=$(echo "$state_json" | jq -r ".applications[\"${app_name}\"].staged_path")
 
-        if [ "$update_available" == "true" ] && [ -n "$staged_path" ]; then
+        # Check if an update is pending
+        if [ -n "$pending_version" ] && [ -n "$staged_path" ]; then
             if [ -f "$staged_path" ]; then
+                log "INFO: Applying update for ${app_name} version ${pending_version}..."
                 backup_and_swap_binary "$app_name" "$staged_path"
+                
+                # Update the JSON state for this app (promotion)
+                new_state_json=$(echo "$new_state_json" | jq \
+                    ".applications[\"${app_name}\"].current_version = \"${pending_version}\" |
+                     .applications[\"${app_name}\"].pending_version = \"\" |
+                     .applications[\"${app_name}\"].staged_path = \"\"")
             else
                 log "WARN: Staged file ${staged_path} for ${app_name} not found. Skipping."
+                # Clear the pending state so we don't try again
+                new_state_json=$(echo "$new_state_json" | jq \
+                    ".applications[\"${app_name}\"].pending_version = \"\" |
+                     .applications[\"${app_name}\"].staged_path = \"\"")
             fi
         fi
     done
-}
-
-reset_update_state() {
-    local state_json="$1"
+    
+    # Reset notify_after and write the new state all at once
     log "INFO: Resetting update state in JSON..."
     local temp_state_file
     temp_state_file=$(mktemp)
-    echo "$state_json" | jq '
-        .notify_after = 0 |
-        .applications |= with_entries(
-            .value.update_available = false |
-            .value.staged_path = ""
-        )
-    ' > "$temp_state_file"
+    
+    echo "$new_state_json" | jq '.notify_after = 0' > "$temp_state_file"
+    
     mv "$temp_state_file" "$STATE_FILE"
     chown pi:pi "$STATE_FILE"
 }
 
-start_service() {
-    log "INFO: Starting core service..."
-    if ! systemctl start amaru-pi.service; then
-        abort "Failed to start amaru-pi.service. Manual intervention required."
-    fi
+start_services() {
+    log "INFO: Starting all managed services..."
+    for service in "${MANAGED_SERVICES[@]}"; do
+        if ! systemctl start "$service"; then
+            log "ERROR: Failed to start $service. Manual intervention may be required."
+        fi
+    done
 }
 
 main() {
@@ -95,11 +108,12 @@ main() {
     validate_state_file
     local state_json
     state_json=$(cat "$STATE_FILE")
-    stop_service
-    apply_updates "$state_json"
-    reset_update_state "$state_json"
+    
+    stop_services
+    apply_updates_and_promote_versions "$state_json"
     rm -f "$TRIGGER_FILE"
-    start_service
+    start_services
+    
     log "INFO: Update activation complete."
 }
 
