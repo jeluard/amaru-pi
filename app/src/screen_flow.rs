@@ -133,7 +133,7 @@ impl ScreenFlow {
         if !handled {
             // Only deal with input if screen hasn't captured it
             match (event.id, event.press_type) {
-                (ButtonId::A, ButtonPress::Short) => {
+                (ButtonId::Y, ButtonPress::Short) => {
                     self.update_screen(self.next_kind(self.current_screen_kind));
                 }
                 (ButtonId::B, ButtonPress::Short) => {

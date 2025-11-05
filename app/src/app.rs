@@ -106,11 +106,7 @@ impl App {
                 }
 
                 // Modal not active or didn't handle, pass to screen flow
-                if !self.screen_flow.handle_input(event)
-                    && let (ButtonId::B, ButtonPress::Double) = (event.id, event.press_type)
-                {
-                    actions.push(AppAction::Quit);
-                }
+                self.screen_flow.handle_input(event);
             }
         }
 
