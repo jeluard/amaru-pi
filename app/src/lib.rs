@@ -14,4 +14,5 @@ pub mod systemd;
 pub mod top_bar;
 pub mod tui;
 pub mod update;
+pub mod util;
 pub mod wifi;

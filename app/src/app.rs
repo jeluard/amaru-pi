@@ -3,22 +3,29 @@ use crate::frame::FrameState;
 use crate::modal::Modal;
 use crate::network_status::NetworkStatusCache;
 use crate::screen_flow::ScreenFlow;
-use crate::screens::{AppContext, SystemState};
+use crate::screens::{AppContext, ScreenAction, SystemState, WifiConnectionStatus};
 use crate::systemd::ServiceInfo;
 use crate::update::{UpdateManager, UpdateStatus};
 use ratatui::prelude::*;
 use std::time::{Duration, Instant};
+use tokio::sync::mpsc;
 
 pub enum AppEvent {
     Tick,
     Input(InputEvent),
 }
 
-#[derive(PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum AppAction {
     CheckNetworkStatus,
     CheckAmaruStatus,
+    ConnectToWifi(String, String),
     Quit,
+}
+
+#[derive(Debug)]
+pub enum AppActionComplete {
+    WifiConnection(WifiConnectionStatus),
 }
 
 pub struct App {
@@ -30,6 +37,8 @@ pub struct App {
     pub system_state: SystemState,
     modal: Modal,
     update_manager: UpdateManager,
+    pub action_tx: mpsc::Sender<AppActionComplete>,
+    action_rx: mpsc::Receiver<AppActionComplete>,
 }
 
 impl Default for App {
@@ -40,7 +49,9 @@ impl Default for App {
         let system_state = SystemState {
             amaru_status: ServiceInfo::default(),
             network_status: connectivity_cache.last_result,
+            wifi_connection_status: WifiConnectionStatus::default(),
         };
+        let (action_tx, action_rx) = mpsc::channel(100);
         Self {
             frame_state: FrameState::default(),
             screen_flow: ScreenFlow::default(),
@@ -50,6 +61,8 @@ impl Default for App {
             system_state,
             modal: Modal::default(),
             update_manager: UpdateManager::new(Duration::from_secs(5)),
+            action_tx,
+            action_rx,
         }
     }
 }
@@ -61,6 +74,14 @@ impl App {
         match msg {
             AppEvent::Tick => {
                 self.frame_state.update();
+
+                while let Ok(action_result) = self.action_rx.try_recv() {
+                    match action_result {
+                        AppActionComplete::WifiConnection(status) => {
+                            self.system_state.wifi_connection_status = status;
+                        }
+                    }
+                }
 
                 // Amaru status check
                 if self.amaru_status_last_check.elapsed() >= self.amaru_status_interval {
@@ -97,7 +118,19 @@ impl App {
             frame: &self.frame_state,
             system: &self.system_state,
         };
-        self.screen_flow.update(ctx);
+
+        // Let the current screen update and potentially return an action
+        let screen_action = self.screen_flow.update(ctx);
+        match screen_action {
+            ScreenAction::ConnectToWifi(ssid, pw) => {
+                actions.push(AppAction::ConnectToWifi(ssid, pw))
+            }
+            ScreenAction::ResetWifiConnectionStatus => {
+                // Handle this sync action immediately
+                self.system_state.wifi_connection_status = WifiConnectionStatus::Idle;
+            }
+            _ => {}
+        }
 
         actions
     }
