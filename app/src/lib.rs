@@ -1,6 +1,8 @@
+pub mod app;
 pub mod backends;
 pub mod button;
 pub mod cli;
+pub mod frame;
 pub mod keyboard;
 pub mod logs;
 pub mod network_status;
