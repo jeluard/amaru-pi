@@ -4,8 +4,9 @@ use std::{
     time::Duration,
 };
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 pub enum Connectivity {
+    #[default]
     Unknown,
     None,
     Portal,
@@ -25,15 +26,16 @@ impl From<&str> for Connectivity {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 pub enum NetworkState {
+    #[default]
+    Unknown,
     ConnectedGlobal,
     ConnectedLocal,
     ConnectedSite,
     Connecting,
     Disconnected,
     Disconnecting,
-    Unknown,
 }
 
 impl From<&str> for NetworkState {
@@ -50,7 +52,7 @@ impl From<&str> for NetworkState {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Default, Clone, Copy)]
 pub struct NetworkStatus {
     pub state: NetworkState,
     pub connectivity: Connectivity,
@@ -168,8 +170,7 @@ pub fn set_connection(ssid: &str, password: &str) -> anyhow::Result<()> {
     run_and_capture(
         "nmcli",
         [
-            "con", "add", "type", "wifi", "ifname", "wlan0", "con-name", "mobile", "ssid",
-            ssid,
+            "con", "add", "type", "wifi", "ifname", "wlan0", "con-name", "mobile", "ssid", ssid,
         ]
         .to_vec(),
     )?;
@@ -188,14 +189,7 @@ pub fn set_connection(ssid: &str, password: &str) -> anyhow::Result<()> {
 
     run_and_capture(
         "nmcli",
-        [
-            "con",
-            "modify",
-            CONNECTION_NAME,
-            "wifi-sec.psk",
-            password,
-        ]
-        .to_vec(),
+        ["con", "modify", CONNECTION_NAME, "wifi-sec.psk", password].to_vec(),
     )?;
     Ok(())
 }

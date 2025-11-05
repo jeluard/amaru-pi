@@ -41,16 +41,28 @@ impl Display for Kind {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Default, Clone, PartialEq, Eq)]
+pub enum WifiConnectionStatus {
+    #[default]
+    Idle,
+    Connecting,
+    Success,
+    Failed(String),
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ScreenAction {
     None,
     NextScreen,
+    ConnectToWifi(String, String),
+    ResetWifiConnectionStatus,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Default, Clone)]
 pub struct SystemState {
     pub amaru_status: ServiceInfo,
     pub network_status: NetworkStatus,
+    pub wifi_connection_status: WifiConnectionStatus,
 }
 
 #[derive(Clone, Copy)]

@@ -147,13 +147,14 @@ impl ScreenFlow {
         handled
     }
 
-    pub fn update(&mut self, ctx: AppContext) {
+    pub fn update(&mut self, ctx: AppContext) -> ScreenAction {
         let action = self.screen_mut(self.current_screen_kind).update(ctx);
         match action {
-            ScreenAction::None => { /* Do nothing */ }
             ScreenAction::NextScreen => {
                 self.update_screen(self.next_kind(self.current_screen_kind));
+                ScreenAction::None
             }
+            _ => action,
         }
     }
 
