@@ -166,7 +166,22 @@ pub fn scan_ssids() -> anyhow::Result<Vec<String>> {
 const CONNECTION_NAME: &str = "mobile";
 
 #[cfg(feature = "display_hat")]
+pub fn delete_connection() -> anyhow::Result<()> {
+    // Ignore failure
+    let _ = run_and_capture("nmcli", ["con", "delete", CONNECTION_NAME].to_vec());
+
+    Ok(())
+}
+
+#[cfg(not(feature = "display_hat"))]
+pub fn delete_connection() -> anyhow::Result<()> {
+    Ok(())
+}
+
+#[cfg(feature = "display_hat")]
 pub fn set_connection(ssid: &str, password: &str) -> anyhow::Result<()> {
+    delete_connection()?;
+
     run_and_capture(
         "nmcli",
         [
