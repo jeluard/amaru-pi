@@ -10,13 +10,13 @@ const UPDATE_TRIGGER_PATH: &str = "/home/pi/.update_requested";
 const SNOOZE_DURATION_SECS: u64 = 48 * 60 * 60; // 48 hours
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
-struct AppUpdateState {
+pub struct AppUpdateState {
     #[serde(default)]
-    current_version: String,
+    pub current_version: String,
     #[serde(default)]
-    pending_version: String,
+    pub pending_version: String,
     #[serde(default)]
-    staged_path: String,
+    pub staged_path: String,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
@@ -24,7 +24,7 @@ pub struct UpdateState {
     #[serde(default)]
     notify_after: u64,
     #[serde(default)]
-    applications: HashMap<String, AppUpdateState>,
+    pub applications: HashMap<String, AppUpdateState>,
 }
 
 impl UpdateState {
@@ -59,7 +59,7 @@ impl UpdateManager {
     pub fn new(interval: Duration) -> Self {
         Self {
             last_check: Instant::now() - interval, // Force check on first run
-            current_state: Self::read_state_file().unwrap_or_default(),
+            current_state: read_state_file().unwrap_or_default(),
             interval,
         }
     }
@@ -67,7 +67,7 @@ impl UpdateManager {
     pub fn check_for_update(&mut self) -> UpdateStatus {
         if self.last_check.elapsed() >= self.interval {
             self.last_check = Instant::now();
-            match Self::read_state_file() {
+            match read_state_file() {
                 Ok(new_state) => self.current_state = new_state,
                 Err(e) => println!("Error reading state file {}: {}", STATE_FILE_PATH, e),
             }
@@ -95,23 +95,24 @@ impl UpdateManager {
         Ok(())
     }
 
-    fn read_state_file() -> Result<UpdateState> {
-        let path = Path::new(STATE_FILE_PATH);
-        if !path.exists() {
-            println!("Warning, no state file found {}", STATE_FILE_PATH);
-            return Ok(UpdateState::default());
-        }
-        let data = fs::read_to_string(path)?;
-        let state: UpdateState = serde_json::from_str(&data)?;
-        Ok(state)
-    }
-
     fn write_state_file(state: &UpdateState) -> Result<()> {
         let path = Path::new(STATE_FILE_PATH);
         let data = serde_json::to_string_pretty(state)?;
         fs::write(path, data)?;
         Ok(())
     }
+}
+
+/// Reads the update state file from disk.
+pub fn read_state_file() -> Result<UpdateState> {
+    let path = Path::new(STATE_FILE_PATH);
+    if !path.exists() {
+        println!("Warning, no state file found {}", STATE_FILE_PATH);
+        return Ok(UpdateState::default());
+    }
+    let data = fs::read_to_string(path)?;
+    let state: UpdateState = serde_json::from_str(&data)?;
+    Ok(state)
 }
 
 fn current_timestamp() -> Result<u64> {
