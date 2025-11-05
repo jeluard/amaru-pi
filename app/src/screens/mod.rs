@@ -4,6 +4,7 @@ use std::fmt::{self, Display};
 
 pub mod color;
 pub mod exit;
+pub mod info;
 pub mod logo;
 pub mod logs;
 pub mod metrics;
@@ -21,6 +22,7 @@ pub enum Kind {
     Scan,
     Tip,
     WiFiSettings,
+    Info,
 }
 
 impl Display for Kind {
@@ -34,6 +36,7 @@ impl Display for Kind {
             Kind::Scan => write!(f, "Scan"),
             Kind::Tip => write!(f, "Tip"),
             Kind::WiFiSettings => write!(f, "WiFiSettings"),
+            Kind::Info => write!(f, "Info"),
         }
     }
 }

@@ -1,4 +1,5 @@
 use crate::button::{ButtonId, ButtonPress, InputEvent};
+use crate::screens::info::InfoScreen;
 use crate::screens::logo::LogoScreen;
 use crate::screens::logs::LogsScreen;
 use crate::screens::metrics::MetricsScreen;
@@ -31,6 +32,7 @@ impl Default for ScreenFlow {
             Box::new(LogsScreen::default()),
             Box::new(ScanScreen::default()),
             Box::new(WiFiSettingsScreen::default()),
+            Box::new(InfoScreen::default()),
         ];
         let first = Kind::Logo;
         let order = vec![
@@ -40,6 +42,7 @@ impl Default for ScreenFlow {
             Kind::Logs,
             Kind::Scan,
             Kind::WiFiSettings,
+            Kind::Info,
         ];
         let mut seen_kinds = HashSet::new();
 
