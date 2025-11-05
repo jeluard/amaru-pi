@@ -1,3 +1,6 @@
+use crate::logs::{JournalReader, extract_tip_changed};
+use crate::screens::{Kind, ScreenAction, State};
+use crate::wifi::Connectivity;
 use amaru_kernel::Slot;
 use ratatui::Frame;
 use ratatui::layout::{Constraint, Direction, Layout, Rect};
@@ -5,10 +8,6 @@ use ratatui::style::Stylize;
 use ratatui::text::Line;
 use std::time::{Duration, Instant};
 use tui_big_text::{BigText, PixelSize};
-
-use crate::logs::{JournalReader, extract_tip_changed};
-use crate::screens::{Kind, State};
-use crate::wifi::Connectivity;
 
 pub struct TipScreen {
     reader: JournalReader,
@@ -51,7 +50,7 @@ impl crate::screens::Screen for TipScreen {
         Kind::Tip
     }
 
-    fn update(&mut self, _state: State) {
+    fn update(&mut self, _state: State) -> ScreenAction {
         let now = Instant::now();
         if now - self.last_refresh > Duration::from_secs(1) {
             self.last_refresh = now;
@@ -65,9 +64,10 @@ impl crate::screens::Screen for TipScreen {
                 self.update_slot((*tip).into());
             }
         }
+        ScreenAction::None
     }
 
-    fn display(&self, state: State, frame: &mut Frame, area: Rect) -> bool {
+    fn display(&self, state: State, frame: &mut Frame, area: Rect) {
         let chunks = Layout::default()
             .direction(Direction::Vertical)
             .constraints([
@@ -84,7 +84,5 @@ impl crate::screens::Screen for TipScreen {
             .build();
 
         frame.render_widget(text, chunks[1]);
-
-        true
     }
 }

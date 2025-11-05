@@ -27,7 +27,7 @@ impl Screen for WiFiSettingsScreen {
         false
     }
 
-    fn display(&self, _state: State, frame: &mut Frame, area: Rect) -> bool {
+    fn display(&self, _state: State, frame: &mut Frame, area: Rect) {
         let chunks = Layout::default()
             .direction(Direction::Vertical)
             .constraints([
@@ -54,8 +54,6 @@ impl Screen for WiFiSettingsScreen {
         self.render_password_input(frame, password_area_chunks[0]);
         self.render_visibility_button(frame, password_area_chunks[1]);
         self.render_keyboard(frame, chunks[4]);
-
-        true
     }
 }
 

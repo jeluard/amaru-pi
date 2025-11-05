@@ -1,3 +1,5 @@
+use crate::logs::{JournalReader, LogEntry, LogLevel, extract_json};
+use crate::screens::{Kind, ScreenAction, State};
 use ratatui::Frame;
 use ratatui::buffer::Buffer;
 use ratatui::layout::{Alignment, Constraint, Direction, Layout, Rect};
@@ -7,9 +9,6 @@ use ratatui::widgets::{Block, List, ListItem, Paragraph};
 use std::cell::RefCell;
 use std::time::{Duration, Instant};
 use tachyonfx::{CellFilter, EffectManager, EffectTimer, Interpolation, Motion, fx};
-
-use crate::logs::{JournalReader, LogEntry, LogLevel, extract_json};
-use crate::screens::{Kind, State};
 
 impl LogLevel {
     fn color(&self) -> Color {
@@ -92,7 +91,7 @@ impl crate::screens::Screen for LogsScreen {
         Kind::Logs
     }
 
-    fn update(&mut self, state: State) {
+    fn update(&mut self, state: State) -> ScreenAction {
         if state.frame_count.is_multiple_of(100) {
             let logs = self
                 .reader
@@ -107,9 +106,10 @@ impl crate::screens::Screen for LogsScreen {
                 self.update_logs(logs);
             }
         }
+        ScreenAction::None
     }
 
-    fn display(&self, _state: State, frame: &mut Frame, area: Rect) -> bool {
+    fn display(&self, _state: State, frame: &mut Frame, area: Rect) {
         if self.logs.is_empty() {
             // Show "no logs" centered
             let chunks = Layout::default()
@@ -160,7 +160,5 @@ impl crate::screens::Screen for LogsScreen {
         let now = Instant::now();
         let delta = now.duration_since(self.last_refresh);
         self.process_effects(delta, frame.buffer_mut(), area);
-
-        true
     }
 }
