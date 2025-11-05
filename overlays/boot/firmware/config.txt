@@ -59,3 +59,9 @@ dtoverlay=dwc2,dr_mode=host
 #dtoverlay=vc4-kms-dpi-disable,display=1
 
 dtparam=pwm=on
+
+disable_splash=1
+boot_delay=0
+camera_auto_detect=0
+display_auto_detect=0
+disable_overscan=1
