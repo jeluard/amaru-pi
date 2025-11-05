@@ -2,7 +2,7 @@ use LogLevel::*;
 use serde::{Deserialize, Serialize};
 #[cfg(not(feature = "display_hat"))]
 use std::time::{SystemTime, UNIX_EPOCH};
-use std::{cmp::Ordering, fmt};
+use std::{cmp::Ordering, fmt, str::FromStr};
 
 #[cfg(feature = "display_hat")]
 use std::{
@@ -49,6 +49,21 @@ impl Ord for LogLevel {
 impl PartialOrd for LogLevel {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.cmp(other))
+    }
+}
+
+impl FromStr for LogLevel {
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.trim().to_lowercase().as_str() {
+            "debug" => Ok(LogLevel::DEBUG),
+            "trace" => Ok(LogLevel::TRACE),
+            "info" => Ok(LogLevel::INFO),
+            "warn" => Ok(LogLevel::WARN),
+            "error" => Ok(LogLevel::ERROR),
+            _ => Err(()),
+        }
     }
 }
 

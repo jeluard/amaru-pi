@@ -7,6 +7,7 @@ use ratatui::style::{Color, Style};
 use ratatui::text::{Line, Span};
 use ratatui::widgets::{Block, List, ListItem, Paragraph};
 use std::cell::RefCell;
+use std::env;
 use std::time::{Duration, Instant};
 use tachyonfx::{CellFilter, EffectManager, EffectTimer, Interpolation, Motion, fx};
 
@@ -23,16 +24,24 @@ impl LogLevel {
 }
 
 pub struct LogsScreen {
+    level: LogLevel,
     reader: JournalReader,
     last_refresh: Instant,
     logs: Vec<LogEntry>,
     effects: RefCell<EffectManager<()>>,
 }
 
+const DEFAULT_LEVEL: LogLevel = LogLevel::DEBUG;
+
 impl Default for LogsScreen {
     fn default() -> Self {
+        let level = env::var("AMARU_PI_LOGS_LEVEL")
+            .ok()
+            .map(|s| s.parse().unwrap_or(DEFAULT_LEVEL))
+            .unwrap_or(DEFAULT_LEVEL);
         let reader = JournalReader::new("amaru.service");
         LogsScreen {
+            level,
             reader,
             last_refresh: Instant::now(),
             effects: RefCell::new(EffectManager::default()),
@@ -99,7 +108,7 @@ impl crate::screens::Screen for LogsScreen {
                 .unwrap_or_default()
                 .iter()
                 .flat_map(|str| extract_json(str.as_str()))
-                .filter(|log| log.level >= LogLevel::INFO)
+                .filter(|log| log.level >= self.level)
                 .collect::<Vec<_>>();
 
             if !logs.is_empty() {
