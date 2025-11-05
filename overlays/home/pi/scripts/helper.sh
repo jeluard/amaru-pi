@@ -10,8 +10,8 @@ ask_and_reboot() {
 
     read -rp "➡️ Reboot to apply changes? (yes/NO): " CONFIRM
     if [[ "$CONFIRM" == "yes" ]]; then
-        echo "➡️ Rebooting in 10 seconds... Press Ctrl+C to cancel."
-        for i in {10..1}; do
+        echo "➡️ Rebooting in 5 seconds... Press Ctrl+C to cancel."
+        for i in {5..1}; do
             printf "\r%2d" "$i"
             sleep 1
         done
