@@ -1,4 +1,4 @@
-use crate::screens::{Kind, ScreenAction, State};
+use crate::screens::{AppContext, Kind, ScreenAction};
 use axum::{
     Router,
     http::{HeaderMap, StatusCode},
@@ -114,12 +114,12 @@ impl crate::screens::Screen for MetricsScreen {
         Kind::Metrics
     }
 
-    fn update(&mut self, _state: State) -> ScreenAction {
+    fn update(&mut self, _ac: AppContext) -> ScreenAction {
         self.on_tick();
         ScreenAction::None
     }
 
-    fn display(&self, _state: State, frame: &mut Frame, area: Rect) {
+    fn display(&self, _ac: AppContext, frame: &mut Frame, area: Rect) {
         self.render_animated_chart(frame, area);
     }
 }

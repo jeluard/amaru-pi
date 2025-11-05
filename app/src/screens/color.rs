@@ -1,3 +1,4 @@
+use crate::screens::{AppContext, Kind};
 use palette::convert::FromColorUnclamped;
 use palette::{Okhsv, Srgb};
 use ratatui::Frame;
@@ -7,8 +8,6 @@ use ratatui::style::Color;
 use ratatui::text::Text;
 use ratatui::widgets::Widget;
 use std::time::{Duration, Instant};
-
-use crate::screens::{Kind, State};
 
 #[derive(Debug, Default)]
 pub struct ColorScreen {
@@ -53,7 +52,7 @@ impl crate::screens::Screen for ColorScreen {
         Kind::Color
     }
 
-    fn display(&self, _state: State, _frame: &mut Frame, _area: Rect) {
+    fn display(&self, _ac: AppContext, _frame: &mut Frame, _area: Rect) {
         // frame.render_widget(self, area);
     }
 }

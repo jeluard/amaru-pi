@@ -1,9 +1,6 @@
-use crate::{button::InputEvent, systemd::ServiceInfo, wifi::NetworkStatus};
+use crate::{button::InputEvent, frame::FrameState, systemd::ServiceInfo, wifi::NetworkStatus};
 use ratatui::{Frame, layout::Rect};
-use std::{
-    fmt::{self, Display},
-    time::Duration,
-};
+use std::fmt::{self, Display};
 
 pub mod color;
 pub mod exit;
@@ -48,30 +45,15 @@ pub enum ScreenAction {
 }
 
 #[derive(Debug, Clone)]
-pub struct State {
-    pub frame_count: u64,
-    pub elapsed_since_startup: Duration,
-    pub elapsed_since_last_frame: Duration,
+pub struct SystemState {
     pub amaru_status: ServiceInfo,
     pub network_status: NetworkStatus,
 }
 
-impl State {
-    pub fn new(
-        frame_count: u64,
-        elapsed_since_last_frame: Duration,
-        elapsed_since_startup: Duration,
-        amaru_status: ServiceInfo,
-        network_status: NetworkStatus,
-    ) -> Self {
-        State {
-            frame_count,
-            elapsed_since_startup,
-            elapsed_since_last_frame,
-            amaru_status,
-            network_status,
-        }
-    }
+#[derive(Clone, Copy)]
+pub struct AppContext<'a> {
+    pub frame: &'a FrameState,
+    pub system: &'a SystemState,
 }
 
 /// The abstraction allowing to manipulate Screen content
@@ -90,12 +72,12 @@ pub trait Screen {
 
     /// Update the screen's state. Called once per frame *before* display.
     /// Can return a `ScreenAction` to be processed by the `ScreenFlow`.
-    fn update(&mut self, _state: State) -> ScreenAction {
+    fn update(&mut self, _ctx: AppContext) -> ScreenAction {
         ScreenAction::None
     }
 
     /// Displays this screen. Takes an immutable reference to `self`.
-    fn display(&self, state: State, frame: &mut Frame, area: Rect);
+    fn display(&self, ctx: AppContext, f: &mut Frame, area: Rect);
 
     // Called right after the last time the Screen is shown
     fn exit(&mut self) {}

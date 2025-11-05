@@ -1,4 +1,4 @@
-use crate::screens::{Kind, State};
+use crate::screens::{AppContext, Kind};
 use qrcode::QrCode;
 use ratatui::{
     Frame,
@@ -18,7 +18,7 @@ impl crate::screens::Screen for ScanScreen {
         Kind::Scan
     }
 
-    fn display(&self, _state: State, frame: &mut Frame, area: Rect) {
+    fn display(&self, _ac: AppContext, frame: &mut Frame, area: Rect) {
         let [_, top_area, bottom_area, _] = Layout::vertical([
             Constraint::Percentage(5),
             Constraint::Percentage(85),
