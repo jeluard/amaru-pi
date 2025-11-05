@@ -12,7 +12,7 @@ ask_and_reboot() {
     if [[ "$CONFIRM" == "yes" ]]; then
         echo "➡️ Rebooting in 10 seconds... Press Ctrl+C to cancel."
         for i in {10..1}; do
-            echo -ne "$i\r"
+            printf "\r%2d" "$i"
             sleep 1
         done
         echo "🔁 Rebooting now..."
