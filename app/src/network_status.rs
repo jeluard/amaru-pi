@@ -9,7 +9,7 @@ fn check_network_status_or_unknown() -> NetworkStatus {
 }
 pub struct NetworkStatusCache {
     last_check: Instant,
-    last_result: NetworkStatus,
+    pub last_result: NetworkStatus,
     interval: Duration,
 }
 
