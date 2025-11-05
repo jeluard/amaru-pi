@@ -3,22 +3,29 @@ use crate::frame::FrameState;
 use crate::network_status::NetworkStatusCache;
 use crate::screen_flow::ScreenFlow;
 use crate::screens::{AppContext, SystemState};
-use crate::systemd::{self, ServiceInfo};
+use crate::systemd::ServiceInfo;
 use ratatui::prelude::*;
 use std::time::{Duration, Instant};
 
+pub enum AppEvent {
+    Tick,
+    Input(InputEvent),
+}
+
+#[derive(PartialEq, Eq)]
 pub enum AppAction {
+    CheckNetworkStatus,
+    CheckAmaruStatus,
     Quit,
-    None,
 }
 
 pub struct App {
     frame_state: FrameState,
     screen_flow: ScreenFlow,
-    connectivity_cache: NetworkStatusCache,
+    pub connectivity_cache: NetworkStatusCache,
     amaru_status_last_check: Instant,
     amaru_status_interval: Duration,
-    system_state: SystemState,
+    pub system_state: SystemState,
 }
 
 impl Default for App {
@@ -42,22 +49,22 @@ impl Default for App {
 }
 
 impl App {
-    pub async fn update(&mut self) {
-        // Update timing state
-        self.frame_state.update();
-
-        // Update network status
-        self.system_state.network_status = self.connectivity_cache.get().await;
-
-        // Update amaru status
-        if self.amaru_status_last_check.elapsed() >= self.amaru_status_interval {
-            self.system_state.amaru_status = tokio::task::spawn_blocking(|| {
-                systemd::get_systemd_service_info("amaru").unwrap_or_default()
-            })
-            .await
-            .unwrap_or_default();
-
-            self.amaru_status_last_check = Instant::now();
+    pub fn update(&mut self, msg: AppEvent) -> Vec<AppAction> {
+        match msg {
+            AppEvent::Tick => {
+                self.frame_state.update();
+                if self.amaru_status_last_check.elapsed() >= self.amaru_status_interval {
+                    self.amaru_status_last_check = Instant::now();
+                    return vec![AppAction::CheckNetworkStatus, AppAction::CheckAmaruStatus];
+                }
+            }
+            AppEvent::Input(event) => {
+                if !self.screen_flow.handle_input(event)
+                    && let (ButtonId::B, ButtonPress::Double) = (event.id, event.press_type)
+                {
+                    return vec![AppAction::Quit];
+                }
+            }
         }
 
         let ctx = AppContext {
@@ -65,15 +72,8 @@ impl App {
             system: &self.system_state,
         };
         self.screen_flow.update(ctx);
-    }
 
-    pub fn handle_input(&mut self, event: InputEvent) -> AppAction {
-        if !self.screen_flow.handle_input(event)
-            && let (ButtonId::B, ButtonPress::Double) = (event.id, event.press_type)
-        {
-            return AppAction::Quit;
-        }
-        AppAction::None
+        Vec::new()
     }
 
     pub fn draw(&self, frame: &mut Frame) {
@@ -81,7 +81,6 @@ impl App {
             frame: &self.frame_state,
             system: &self.system_state,
         };
-
         self.screen_flow.display(ctx, frame);
     }
 }
