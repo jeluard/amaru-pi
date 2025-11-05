@@ -4,6 +4,7 @@ use embedded_graphics_simulator::sdl2::Keycode;
 use embedded_graphics_simulator::{OutputSettings, SimulatorDisplay, SimulatorEvent, Window};
 use mousefood::embedded_graphics::geometry::Size;
 use mousefood::{EmbeddedBackend, EmbeddedBackendConfig, prelude::Rgb565};
+use std::process::exit;
 use std::sync::mpsc::{self, Receiver, Sender};
 use std::time::{Duration, Instant};
 
@@ -78,7 +79,8 @@ fn process_simulator_events(
                 handle_keydown_event(keycode, pending_press, tx);
             }
             SimulatorEvent::Quit => {
-                panic!("simulator window closed");
+                println!("simulator window closed");
+                exit(0);
             }
             _ => { /* Ignore other events */ }
         }
