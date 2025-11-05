@@ -66,8 +66,9 @@ if [ ! -f "${DBS_SNAPSHOT}" ]|| [ -n "${REFRESH_SNAPSHOT:-}" ]; then
     sync_repo https://github.com/pragma-org/amaru ${BUILD_DIR}/amaru-offline jeluard/offline
     cd amaru-offline
 
-    make bootstrap > /dev/null
-    cargo build --release --quiet > /dev/null
+    cargo build --release
+    make clear-dbs
+    ./target/release/amaru bootstrap
     ./target/release/amaru-ledger mithril
     ./target/release/amaru-ledger sync
     tar -czf ${DBS_SNAPSHOT} chain.mainnet.db ledger.mainnet.db
