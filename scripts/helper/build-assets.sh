@@ -3,7 +3,7 @@
 set -euo pipefail
 
 HELPER_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-ROOT_DIR="${HELPER_DIR}/../.."
+ROOT_DIR="$(realpath "${HELPER_DIR}/../..")"
 OVERLAYS_DIR="${ROOT_DIR}/overlays"
 
 # Automatically export all variables
@@ -73,7 +73,7 @@ if [ ! -f "${DBS_SNAPSHOT}" ]|| [ -n "${REFRESH_SNAPSHOT:-}" ]; then
     tar -czf ${DBS_SNAPSHOT} chain.mainnet.db ledger.mainnet.db
     echo "✅ Done: Snapshot created at ${DBS_SNAPSHOT}"
 else
-    echo "✅ Skipping: ${DBS_SNAPSHOT} already exists."
+    echo "➡️ Skipping: ${DBS_SNAPSHOT} already exists."
 fi
 
 # Build amaru
@@ -81,7 +81,7 @@ cd ${BUILD_DIR}
 # TODO remove once jeluard/offline is merged
 sync_repo https://github.com/pragma-org/amaru ${BUILD_DIR}/amaru
 cd amaru
-echo "🔨 Building Amaru binaries..."
+echo "🔨 Building Amaru binary..."
 cross build --target aarch64-unknown-linux-musl --release --quiet > /dev/null 2>&1 #|| echo "Failed to build amaru!" >&2; exit 1;
 cp target/aarch64-unknown-linux-musl/release/amaru ${BIN_DIR}
 

@@ -3,7 +3,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-BIN_DIR=${SCRIPT_DIR}/../bin
+BIN_DIR="$(realpath "${SCRIPT_DIR}/../bin")"
 
 ask_and_reboot() {
     trap 'echo -e "\n❌ Reboot canceled by user."; exit 1' INT

@@ -3,7 +3,7 @@
 set -euo pipefail
 
 HELPER_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-ROOT_DIR="${HELPER_DIR}/../.."
+ROOT_DIR="$(realpath "${HELPER_DIR}/../..")"
 OVERLAYS_DIR="${ROOT_DIR}/overlays"
 
 source ${HELPER_DIR}/remote.sh
