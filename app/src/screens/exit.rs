@@ -79,9 +79,11 @@ impl Screen for ExitScreen {
         Kind::Exit
     }
 
-    fn display(&mut self, state: State, frame: &mut Frame, area: Rect) -> bool {
+    fn update(&mut self, state: State) {
         self.on_tick(state.elapsed_since_last_frame);
+    }
 
+    fn display(&self, _state: State, frame: &mut Frame, area: Rect) -> bool {
         match self.stage {
             ExitStage::ShowingText => {
                 let text = Text::raw(EXIT_TEXT);

@@ -19,7 +19,7 @@ impl crate::screens::Screen for ScanScreen {
         Kind::Scan
     }
 
-    fn display(&mut self, _state: State, frame: &mut Frame, area: Rect) -> bool {
+    fn display(&self, _state: State, frame: &mut Frame, area: Rect) -> bool {
         let [_, top_area, bottom_area, _] = Layout::vertical([
             Constraint::Percentage(5),
             Constraint::Percentage(85),

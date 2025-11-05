@@ -36,6 +36,18 @@ impl Default for App {
     }
 }
 
+impl From<&App> for State {
+    fn from(app: &App) -> Self {
+        State::new(
+            app.frame_state.frame_count,
+            app.frame_state.elapsed_since_last_frame,
+            app.frame_state.elapsed_since_startup,
+            app.amaru_status.clone(),
+            app.connectivity_cache.last_result,
+        )
+    }
+}
+
 impl App {
     pub async fn update(&mut self) {
         // Update timing state
@@ -66,14 +78,8 @@ impl App {
     }
 
     pub fn draw(&mut self, frame: &mut Frame) {
-        let state = State::new(
-            self.frame_state.frame_count,
-            self.frame_state.elapsed_since_last_frame,
-            self.frame_state.elapsed_since_startup,
-            self.amaru_status.clone(),
-            self.connectivity_cache.last_result,
-        );
-
+        let state: State = (&*self).into();
+        self.screen_flow.update(state.clone());
         self.screen_flow.display(state, frame);
     }
 }

@@ -4,6 +4,7 @@ use ratatui::layout::{Alignment, Constraint, Direction, Layout, Rect};
 use ratatui::style::{Color, Style};
 use ratatui::text::{Line, Span};
 use ratatui::widgets::{Block, List, ListItem, Paragraph};
+use std::cell::RefCell;
 use std::time::{Duration, Instant};
 use tachyonfx::{CellFilter, EffectManager, EffectTimer, Interpolation, Motion, fx};
 
@@ -26,7 +27,7 @@ pub struct LogsScreen {
     reader: JournalReader,
     last_refresh: Instant,
     logs: Vec<LogEntry>,
-    effects: EffectManager<()>,
+    effects: RefCell<EffectManager<()>>,
 }
 
 impl Default for LogsScreen {
@@ -35,7 +36,7 @@ impl Default for LogsScreen {
         LogsScreen {
             reader,
             last_refresh: Instant::now(),
-            effects: EffectManager::default(),
+            effects: RefCell::new(EffectManager::default()),
             logs: vec![],
         }
     }
@@ -55,17 +56,19 @@ impl LogsScreen {
         self.last_refresh = Instant::now();
 
         // add smooth slide animation
-        self.effects = EffectManager::default();
+        self.effects = RefCell::new(EffectManager::default());
         let timer = EffectTimer::from_ms(3000, Interpolation::QuadOut);
         let mut fx_slide = fx::slide_in(Motion::UpToDown, 2, 0, Color::Reset, timer);
         // Optionally filter which cells get this effect
         fx_slide = fx_slide.with_filter(CellFilter::All);
-        self.effects.add_effect(fx_slide);
+        self.effects.borrow_mut().add_effect(fx_slide);
     }
 
-    fn process_effects(&mut self, delta: Duration, buf: &mut Buffer, area: Rect) {
+    fn process_effects(&self, delta: Duration, buf: &mut Buffer, area: Rect) {
         let fx_duration = delta.into();
-        self.effects.process_effects(fx_duration, buf, area);
+        self.effects
+            .borrow_mut()
+            .process_effects(fx_duration, buf, area);
     }
 }
 
@@ -89,7 +92,7 @@ impl crate::screens::Screen for LogsScreen {
         Kind::Logs
     }
 
-    fn display(&mut self, state: State, frame: &mut Frame, area: Rect) -> bool {
+    fn update(&mut self, state: State) {
         if state.frame_count.is_multiple_of(100) {
             let logs = self
                 .reader
@@ -104,7 +107,9 @@ impl crate::screens::Screen for LogsScreen {
                 self.update_logs(logs);
             }
         }
+    }
 
+    fn display(&self, _state: State, frame: &mut Frame, area: Rect) -> bool {
         if self.logs.is_empty() {
             // Show "no logs" centered
             let chunks = Layout::default()

@@ -27,7 +27,7 @@ impl Screen for WiFiSettingsScreen {
         false
     }
 
-    fn display(&mut self, _state: State, frame: &mut Frame, area: Rect) -> bool {
+    fn display(&self, _state: State, frame: &mut Frame, area: Rect) -> bool {
         let chunks = Layout::default()
             .direction(Direction::Vertical)
             .constraints([
