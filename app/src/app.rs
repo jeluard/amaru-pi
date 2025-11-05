@@ -7,6 +7,11 @@ use crate::systemd::{self, ServiceInfo};
 use ratatui::prelude::*;
 use std::time::{Duration, Instant};
 
+pub enum AppMsg {
+    Tick,
+    Input(InputEvent),
+}
+
 pub enum AppAction {
     Quit,
     None,
@@ -42,22 +47,28 @@ impl Default for App {
 }
 
 impl App {
-    pub async fn update(&mut self) {
-        // Update timing state
-        self.frame_state.update();
+    pub async fn update(&mut self, msg: AppMsg) -> AppAction {
+        match msg {
+            AppMsg::Tick => {
+                self.frame_state.update();
+                self.system_state.network_status = self.connectivity_cache.get().await;
 
-        // Update network status
-        self.system_state.network_status = self.connectivity_cache.get().await;
-
-        // Update amaru status
-        if self.amaru_status_last_check.elapsed() >= self.amaru_status_interval {
-            self.system_state.amaru_status = tokio::task::spawn_blocking(|| {
-                systemd::get_systemd_service_info("amaru").unwrap_or_default()
-            })
-            .await
-            .unwrap_or_default();
-
-            self.amaru_status_last_check = Instant::now();
+                if self.amaru_status_last_check.elapsed() >= self.amaru_status_interval {
+                    self.system_state.amaru_status = tokio::task::spawn_blocking(|| {
+                        systemd::get_systemd_service_info("amaru").unwrap_or_default()
+                    })
+                    .await
+                    .unwrap_or_default();
+                    self.amaru_status_last_check = Instant::now();
+                }
+            }
+            AppMsg::Input(event) => {
+                if !self.screen_flow.handle_input(event)
+                    && let (ButtonId::B, ButtonPress::Double) = (event.id, event.press_type)
+                {
+                    return AppAction::Quit;
+                }
+            }
         }
 
         let ctx = AppContext {
@@ -65,14 +76,6 @@ impl App {
             system: &self.system_state,
         };
         self.screen_flow.update(ctx);
-    }
-
-    pub fn handle_input(&mut self, event: InputEvent) -> AppAction {
-        if !self.screen_flow.handle_input(event)
-            && let (ButtonId::B, ButtonPress::Double) = (event.id, event.press_type)
-        {
-            return AppAction::Quit;
-        }
         AppAction::None
     }
 
@@ -81,7 +84,6 @@ impl App {
             frame: &self.frame_state,
             system: &self.system_state,
         };
-
         self.screen_flow.display(ctx, frame);
     }
 }

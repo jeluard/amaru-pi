@@ -1,4 +1,4 @@
-use crate::app::{App, AppAction};
+use crate::app::{App, AppAction, AppMsg};
 use crate::backends;
 use anyhow::Result;
 use ratatui::Terminal;
@@ -15,11 +15,13 @@ pub async fn run() -> Result<()> {
     let mut app = App::default();
     let running = Arc::new(AtomicBool::new(true));
     while running.load(Ordering::SeqCst) {
-        app.update().await;
+        if let AppAction::Quit = app.update(AppMsg::Tick).await {
+            running.store(false, Ordering::SeqCst);
+        }
 
         // TODO multiple events
         if let Ok(event) = input_rx.try_recv()
-            && let AppAction::Quit = app.handle_input(event)
+            && let AppAction::Quit = app.update(AppMsg::Input(event)).await
         {
             running.store(false, Ordering::SeqCst);
         }
