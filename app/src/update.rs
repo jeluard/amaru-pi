@@ -80,7 +80,8 @@ impl UpdateManager {
         }
     }
 
-    /// Snoozes notifications by updating the `notify_after` timestamp in the state file.
+    /// Snoozes notifications by updating the `notify_after` timestamp in the
+    /// state file.
     pub fn snooze(&mut self) -> Result<()> {
         let now = current_timestamp()?;
         self.current_state.notify_after = now + SNOOZE_DURATION_SECS;

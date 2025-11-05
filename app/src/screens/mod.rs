@@ -1,6 +1,9 @@
 use crate::{button::InputEvent, frame::FrameState, systemd::ServiceInfo, wifi::NetworkStatus};
 use ratatui::{Frame, layout::Rect};
-use std::fmt::{self, Display};
+use std::{
+    fmt::{self, Display},
+    str::FromStr,
+};
 
 pub mod color;
 pub mod exit;
@@ -23,6 +26,23 @@ pub enum Kind {
     Tip,
     WiFiSettings,
     Info,
+}
+
+impl FromStr for Kind {
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.trim().to_lowercase().as_str() {
+            "logo" => Ok(Kind::Logo),
+            "tip" => Ok(Kind::Tip),
+            "metrics" => Ok(Kind::Metrics),
+            "logs" => Ok(Kind::Logs),
+            "scan" => Ok(Kind::Scan),
+            "info" => Ok(Kind::Info),
+            "wifi-settings" | "wifi" | "wifi_settings" => Ok(Kind::WiFiSettings),
+            _ => Err(()),
+        }
+    }
 }
 
 impl Display for Kind {

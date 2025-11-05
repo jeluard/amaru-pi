@@ -12,12 +12,33 @@ use crate::top_bar::TopBar;
 use crate::wifi::Connectivity;
 use ratatui::prelude::*;
 use std::collections::HashSet;
+use std::env;
 use std::time::Duration;
 
 pub struct ScreenFlow {
     screens: Vec<Box<dyn Screen>>,
     order: Vec<Kind>,
     pub current_screen_kind: Kind,
+}
+
+fn get_screen_order() -> Vec<Kind> {
+    let default = vec![
+        Kind::Logo,
+        Kind::Tip,
+        Kind::Metrics,
+        Kind::Logs,
+        Kind::Scan,
+        Kind::WiFiSettings,
+    ];
+    env::var("AMARU_PI_SCREENS")
+        .ok()
+        .map(|var| {
+            var.split(',')
+                .filter_map(|s| s.trim().parse::<Kind>().ok())
+                .collect::<Vec<_>>()
+        })
+        .filter(|v| !v.is_empty())
+        .unwrap_or(default)
 }
 
 impl Default for ScreenFlow {
@@ -34,41 +55,25 @@ impl Default for ScreenFlow {
             Box::new(WiFiSettingsScreen::default()),
             Box::new(InfoScreen::default()),
         ];
-        let first = Kind::Logo;
-        let order = vec![
-            first,
-            Kind::Tip,
-            Kind::Metrics,
-            Kind::Logs,
-            Kind::Scan,
-            Kind::WiFiSettings,
-            Kind::Info,
-        ];
-        let mut seen_kinds = HashSet::new();
+        let order = get_screen_order();
+        let current_screen_kind = order
+            .first()
+            .copied()
+            .expect("There must be at least one element in screens order");
+        let kinds: Vec<_> = screens.iter().map(|s| s.kind()).collect();
+        let unique_kinds: HashSet<_> = kinds.iter().copied().collect();
 
-        for screen in &screens {
-            let kind = screen.kind();
-            if !seen_kinds.insert(kind) {
-                panic!("Duplicate screen kind detected: {:?}", kind);
-            }
+        if unique_kinds.len() != kinds.len() {
+            panic!("Duplicate screen kind detected");
         }
-
-        for &kind in &order {
-            if !seen_kinds.contains(&kind) {
-                panic!("No screen found for kind: {:?}", kind);
-            }
-        }
-
-        for &kind in &seen_kinds {
-            if !order.contains(&kind) {
-                panic!("Screen kind {:?} not present in order list", kind);
-            }
+        if let Some(kind) = order.iter().find(|&&k| !unique_kinds.contains(&k)) {
+            panic!("No screen found for kind: {:?}", kind);
         }
 
         Self {
             screens,
             order,
-            current_screen_kind: first,
+            current_screen_kind,
         }
     }
 }
@@ -97,10 +102,7 @@ impl ScreenFlow {
             .iter()
             .position(|&k| k == kind)
             .expect("Kind not in order");
-        let mut next_idx: usize = (idx + 1) % self.order.len();
-        if next_idx == 0 {
-            next_idx = 1
-        }
+        let next_idx: usize = (idx + 1) % self.order.len();
         self.order[next_idx]
     }
 
@@ -111,10 +113,7 @@ impl ScreenFlow {
             .iter()
             .position(|&k| k == kind)
             .expect("Kind not in order");
-        let mut prev_idx = (idx + self.order.len() - 1) % self.order.len();
-        if prev_idx == 0 {
-            prev_idx = self.order.len() - 1
-        }
+        let prev_idx = (idx + self.order.len() - 1) % self.order.len();
         self.order[prev_idx]
     }
 

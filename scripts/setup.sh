@@ -14,7 +14,7 @@ RUN_SETUP="${RUN_SETUP:-true}"
 if [[ "$BUILD_ASSETS" == true ]]; then
   ${HELPER_DIR}/build-assets.sh
 else
-  echo "⚠️ Skipping building assets ($BUILD_ASSETS not set)"
+  echo "⚠️ Skipping building assets (\$BUILD_ASSETS not set)"
 fi
 
 ${HELPER_DIR}/sync-overlays.sh
