@@ -28,6 +28,7 @@ fn get_screen_order() -> Vec<Kind> {
         Kind::Metrics,
         Kind::Logs,
         Kind::Scan,
+        Kind::Info,
         Kind::WiFiSettings,
     ];
     env::var("AMARU_PI_SCREENS")
