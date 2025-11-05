@@ -1,5 +1,4 @@
 #!/bin/bash
-
 set -euo pipefail
 
 STATE_FILE="/home/pi/.amaru_update_state.json"
@@ -7,7 +6,11 @@ STAGING_DIR="/tmp"
 LOCK_FILE="/tmp/amaru_check_update.lock"
 
 declare -a BINARIES_TO_UPDATE=("amaru-pi")
-declare -A GITHUB_REPOS=( ["amaru-pi"]="jeluard/amaru-pi" )
+
+declare -A GITHUB_REPOS
+# GITHUB_REPOS["amaru"]="pragma-org/amaru"
+GITHUB_REPOS["amaru-pi"]="jeluard/amaru-pi"
+# GITHUB_REPOS["amaru-doctor"]="jeluard/amaru-doctor"
 
 exec 200>"$LOCK_FILE"
 flock -n 200 || { echo "ERROR: Another update process is running."; exit 1; }
@@ -22,14 +25,19 @@ abort() {
 init_state_file() {
     if [ ! -f "$STATE_FILE" ]; then
         log "INFO: State file not found. Creating new one at ${STATE_FILE}"
-        jq -n '{
-            "notify_after": 0,
-            "applications": {
-                "amaru": {"current_version": "v0.0.0", "update_available": false, "staged_path": ""},
-                "amaru-pi": {"current_version": "v0.0.0", "update_available": false, "staged_path": ""},
-                "amaru-doctor": {"current_version": "v0.0.0", "update_available": false, "staged_path": ""}
-            }
-        }' > "$STATE_FILE"
+        
+        # Dynamically build the applications object
+        local app_json=""
+        for app in "${BINARIES_TO_UPDATE[@]}"; do
+            app_json+="\"${app}\": {\"current_version\": \"v0.0.0\", \"pending_version\": \"\", \"staged_path\": \"\"},"
+        done
+        app_json=${app_json%,} # Remove trailing comma
+        
+        jq -n "{
+            \"notify_after\": 0,
+            \"applications\": { ${app_json} }
+        }" > "$STATE_FILE"
+        chown pi:pi "$STATE_FILE"
     fi
 }
 
@@ -51,7 +59,6 @@ extract_release_info() {
     checksum_url=$(echo "$release_json" | jq -r ".assets[] | select(.name | endswith(\"checksums.txt\")) | .browser_download_url")
 
     [[ -n "$latest_version" && -n "$download_url" && -n "$checksum_url" ]] || return 1
-
     echo "${latest_version}|${download_url}|${checksum_url}"
 }
 
@@ -83,7 +90,7 @@ stage_binary() {
     echo "$staging_path"
 }
 
-update_state_file() {
+update_state_file_with_pending() {
     local binary_name="$1"
     local version="$2"
     local staged_path="$3"
@@ -91,17 +98,16 @@ update_state_file() {
     local tmp_state
     tmp_state=$(mktemp)
     jq \
-      ".applications[\"${binary_name}\"].update_available = true |
-       .applications[\"${binary_name}\"].staged_path = \"${staged_path}\" |
-       .applications[\"${binary_name}\"].current_version = \"${version}\"" \
+      ".applications[\"${binary_name}\"].pending_version = \"${version}\" |
+       .applications[\"${binary_name}\"].staged_path = \"${staged_path}\"" \
       "$STATE_FILE" > "$tmp_state"
     mv "$tmp_state" "$STATE_FILE"
+    chown pi:pi "$STATE_FILE"
 }
 
 check_one_binary() {
     local binary_name="$1"
     local repo="${GITHUB_REPOS[$binary_name]}"
-    local staging_path="${STAGING_DIR}/${binary_name}.new"
 
     log "INFO: Checking ${binary_name}..."
 
@@ -133,7 +139,7 @@ check_one_binary() {
     staged=$(stage_binary "$binary_name" "$archive")
     rm -f "$archive" "$checksum_file"
 
-    update_state_file "$binary_name" "$latest_version" "$staged"
+    update_state_file_with_pending "$binary_name" "$latest_version" "$staged"
     log "SUCCESS: ${binary_name} staged at ${staged} (version ${latest_version})."
 }
 

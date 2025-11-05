@@ -33,12 +33,18 @@ impl<'a> Widget for TopBar<'a> {
         .block(Block::default().borders(Borders::NONE))
         .render(left, buf);
 
-        Paragraph::new(Span::styled("●", Style::default().fg(self.amaru_status_color)))
-            .block(Block::default().borders(Borders::NONE))
-            .render(before_right, buf);
+        Paragraph::new(Span::styled(
+            "●",
+            Style::default().fg(self.amaru_status_color),
+        ))
+        .block(Block::default().borders(Borders::NONE))
+        .render(before_right, buf);
 
-        Paragraph::new(Span::styled("●", Style::default().fg(self.network_status_color)))
-            .block(Block::default().borders(Borders::NONE))
-            .render(right, buf);
+        Paragraph::new(Span::styled(
+            "●",
+            Style::default().fg(self.network_status_color),
+        ))
+        .block(Block::default().borders(Borders::NONE))
+        .render(right, buf);
     }
 }
