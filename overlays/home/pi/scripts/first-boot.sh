@@ -8,5 +8,5 @@ raspi-config --expand-rootfs
 
 echo "Partition resized" >> /var/log/firstboot.log
 
-systemctl disable firstboot.service
+systemctl disable first-boot.service
 rm -f /etc/systemd/system/first-boot.service
