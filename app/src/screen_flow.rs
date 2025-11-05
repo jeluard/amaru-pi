@@ -5,7 +5,7 @@ use crate::screens::metrics::MetricsScreen;
 use crate::screens::scan::ScanScreen;
 use crate::screens::tip::TipScreen;
 use crate::screens::wifi_settings::WiFiSettingsScreen;
-use crate::screens::{Kind, Screen, State};
+use crate::screens::{Kind, Screen, ScreenAction, State};
 use crate::systemd::ActiveState;
 use crate::top_bar::TopBar;
 use crate::wifi::Connectivity;
@@ -71,6 +71,14 @@ impl Default for ScreenFlow {
 }
 
 impl ScreenFlow {
+    fn screen(&self, kind: Kind) -> &dyn Screen {
+        self.screens
+            .iter()
+            .find(|s| s.kind() == kind)
+            .map(|s| &**s)
+            .unwrap_or_else(|| panic!("Screen with given kind not found: {}", kind))
+    }
+
     fn screen_mut(&mut self, kind: Kind) -> &mut dyn Screen {
         self.screens
             .iter_mut()
@@ -137,10 +145,16 @@ impl ScreenFlow {
     }
 
     pub fn update(&mut self, state: State) {
-        self.screen_mut(self.current_screen_kind).update(state);
+        let action = self.screen_mut(self.current_screen_kind).update(state);
+        match action {
+            ScreenAction::None => { /* Do nothing */ }
+            ScreenAction::NextScreen => {
+                self.update_screen(self.next_kind(self.current_screen_kind));
+            }
+        }
     }
 
-    pub fn display(&mut self, state: State, frame: &mut Frame) {
+    pub fn display(&self, state: State, frame: &mut Frame) {
         let [top_area, body] =
             Layout::vertical([Constraint::Length(1), Constraint::Min(0)]).areas(frame.area());
 
@@ -163,12 +177,7 @@ impl ScreenFlow {
 
         frame.render_widget(top_bar, top_area);
 
-        if !self
-            .screen_mut(self.current_screen_kind)
-            .display(state, frame, body)
-        {
-            // Screen display is finished, move to next screen
-            self.update_screen(self.next_kind(self.current_screen_kind));
-        }
+        self.screen(self.current_screen_kind)
+            .display(state, frame, body);
     }
 }

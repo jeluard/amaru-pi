@@ -41,6 +41,12 @@ impl Display for Kind {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ScreenAction {
+    None,
+    NextScreen,
+}
+
 #[derive(Debug, Clone)]
 pub struct State {
     pub frame_count: u64,
@@ -82,16 +88,14 @@ pub trait Screen {
         false
     }
 
-    /// Update the screen's state. Called once per frame before display.
-    fn update(&mut self, _state: State) {
-        // Default implementation does nothing
+    /// Update the screen's state. Called once per frame *before* display.
+    /// Can return a `ScreenAction` to be processed by the `ScreenFlow`.
+    fn update(&mut self, _state: State) -> ScreenAction {
+        ScreenAction::None
     }
 
-    /// Displays this screen.
-    /// Will be called again while `true` is returned. If `false`, triggers the
-    /// logic to change screen.
-    /// Takes an immutable reference to `self`.
-    fn display(&self, state: State, frame: &mut Frame, area: Rect) -> bool;
+    /// Displays this screen. Takes an immutable reference to `self`.
+    fn display(&self, state: State, frame: &mut Frame, area: Rect);
 
     // Called right after the last time the Screen is shown
     fn exit(&mut self) {}

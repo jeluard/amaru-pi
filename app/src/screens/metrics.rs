@@ -1,3 +1,4 @@
+use crate::screens::{Kind, ScreenAction, State};
 use axum::{
     Router,
     http::{HeaderMap, StatusCode},
@@ -13,8 +14,6 @@ use ratatui::symbols::{self};
 use ratatui::text::Span;
 use ratatui::widgets::{Axis, Block, Chart, Dataset};
 use std::net::SocketAddr;
-
-use crate::screens::{Kind, State};
 
 pub struct MetricsScreen {
     data1: Vec<(f64, f64)>,
@@ -115,13 +114,13 @@ impl crate::screens::Screen for MetricsScreen {
         Kind::Metrics
     }
 
-    fn update(&mut self, _state: State) {
+    fn update(&mut self, _state: State) -> ScreenAction {
         self.on_tick();
+        ScreenAction::None
     }
 
-    fn display(&self, _state: State, frame: &mut Frame, area: Rect) -> bool {
+    fn display(&self, _state: State, frame: &mut Frame, area: Rect) {
         self.render_animated_chart(frame, area);
-        true
     }
 }
 

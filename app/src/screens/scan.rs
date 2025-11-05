@@ -1,3 +1,4 @@
+use crate::screens::{Kind, State};
 use qrcode::QrCode;
 use ratatui::{
     Frame,
@@ -9,8 +10,6 @@ use ratatui::{
 use std::env;
 use tui_qrcode::{Colors, QrCodeWidget};
 
-use crate::screens::{Kind, State};
-
 #[derive(Debug, Default)]
 pub struct ScanScreen {}
 
@@ -19,7 +18,7 @@ impl crate::screens::Screen for ScanScreen {
         Kind::Scan
     }
 
-    fn display(&self, _state: State, frame: &mut Frame, area: Rect) -> bool {
+    fn display(&self, _state: State, frame: &mut Frame, area: Rect) {
         let [_, top_area, bottom_area, _] = Layout::vertical([
             Constraint::Percentage(5),
             Constraint::Percentage(85),
@@ -51,7 +50,5 @@ impl crate::screens::Screen for ScanScreen {
         .alignment(Alignment::Center);
 
         frame.render_widget(text, bottom_area);
-
-        true
     }
 }
