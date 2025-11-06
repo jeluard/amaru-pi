@@ -39,10 +39,8 @@ impl Screen for InfoScreen {
 
         if self.state.applications.is_empty() {
             lines.push(Line::from("").centered());
-            lines.push(Line::from(" No application info found. ").centered());
+            lines.push(Line::from(" No updates found. ").centered());
             lines.push(Line::from("").centered());
-            lines.push(Line::from(" State file may be missing or empty: ").centered());
-            lines.push(Line::from(" /home/pi/.amaru_update_state.json ").centered());
         } else {
             lines.push(Line::from("").centered());
             lines.push(Line::from(" APPLICATION VERSIONS ").centered());
