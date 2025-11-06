@@ -98,12 +98,17 @@ fn truncate_with_ellipsis(s: &str, max_width: usize) -> String {
 fn format_message(log_entry: &LogEntry) -> String {
     let target = log_entry.target.clone().unwrap_or_default();
     format!(
-        "{} {}",
+        "{} {} {}",
         target,
         log_entry
             .span
             .as_ref()
             .map(|s| s.name.clone())
+            .unwrap_or_default(),
+        log_entry
+            .fields
+            .as_ref()
+            .map(|s| s.message.clone())
             .unwrap_or_default()
     )
 }
