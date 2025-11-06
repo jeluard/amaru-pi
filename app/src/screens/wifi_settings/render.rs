@@ -59,7 +59,7 @@ impl WiFiSettingsScreen {
         let widget = match self.focus {
             Focus::Fields => {
                 let lines = vec![
-                    Line::from("X/Y: Change Field").alignment(Alignment::Center),
+                    Line::from("A/X: Change Field").alignment(Alignment::Center),
                     Line::from("A (double): Activate/Toggle").alignment(Alignment::Center),
                 ];
                 Paragraph::new(lines).alignment(Alignment::Center)

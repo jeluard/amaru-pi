@@ -5,8 +5,8 @@ use crate::keyboard::{KeyboardAction, KeyboardContext};
 impl WiFiSettingsScreen {
     pub fn handle_field_navigation(&mut self, event: InputEvent) -> bool {
         match (event.id, event.press_type) {
-            // X cycles backward through the fields
-            (ButtonId::X, ButtonPress::Short) => {
+            // A cycles backward through the fields
+            (ButtonId::A, ButtonPress::Short) => {
                 self.active_field = match self.active_field {
                     ActiveField::Ssid => ActiveField::ConnectButton,
                     ActiveField::Password => ActiveField::Ssid,
@@ -14,8 +14,8 @@ impl WiFiSettingsScreen {
                     ActiveField::ConnectButton => ActiveField::PasswordVisibility,
                 };
             }
-            // Y cycles forward through the fields
-            (ButtonId::Y, ButtonPress::Short) => {
+            // X cycles forward through the fields
+            (ButtonId::X, ButtonPress::Short) => {
                 self.active_field = match self.active_field {
                     ActiveField::Ssid => ActiveField::Password,
                     ActiveField::Password => ActiveField::PasswordVisibility,
