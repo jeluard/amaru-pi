@@ -28,7 +28,8 @@ fn get_value_from_data_point(dp: &NumberDataPoint) -> f64 {
 }
 
 /// Parses the OTLP metric data into a simple tuple.
-/// This function also filters out metric types we don't care about by returning `None`.
+/// This function also filters out metric types we don't care about by returning
+/// `None`.
 fn parse_metric_data(data: Option<MetricDataProto>) -> Option<(&'static str, f64)> {
     match data {
         Some(MetricDataProto::Gauge(gauge)) => {
@@ -55,7 +56,8 @@ fn parse_metric_data(data: Option<MetricDataProto>) -> Option<(&'static str, f64
     }
 }
 
-/// Processes a single metric, parsing it and sending it over the channel if valid.
+/// Processes a single metric, parsing it and sending it over the channel if
+/// valid.
 async fn process_metric(
     tx: &Arc<Sender<AppActionComplete>>,
     metric: opentelemetry_proto::tonic::metrics::v1::Metric,
