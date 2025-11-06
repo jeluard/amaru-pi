@@ -67,10 +67,17 @@ impl FromStr for LogLevel {
     }
 }
 
+#[derive(Debug, Deserialize, Serialize)]
+pub struct SpanEntry {
+    pub name: String,
+}
+
 #[derive(Debug, Default, Deserialize, Serialize)]
 pub struct LogEntry {
     pub level: LogLevel,
     pub fields: Option<Fields>,
+    pub target: Option<String>,
+    pub span: Option<SpanEntry>,
 }
 
 #[derive(Debug, Default, Deserialize, Serialize)]
@@ -99,6 +106,18 @@ fn random_log_entry() -> LogEntry {
         "Reconnected to server",
         "Shutdown complete",
     ];
+    const TARGETS: [&str; 10] = [
+        "Initializing system",
+        "Connection established",
+        "User login succeeded",
+        "File not found",
+        "Database timeout",
+        "Processing request",
+        "Cache miss",
+        "Low disk space",
+        "Reconnected to server",
+        "Shutdown complete",
+    ];
 
     let n = SystemTime::now()
         .duration_since(UNIX_EPOCH)
@@ -107,10 +126,16 @@ fn random_log_entry() -> LogEntry {
     let level = LEVELS[random_index(n, LEVELS.len())];
     let message = MESSAGES[random_index(n, MESSAGES.len())];
     let message = format!("{} #{}", message, n % 1000);
+    let target = Some(TARGETS[random_index(n, TARGETS.len())].to_string());
+    let span = Some(SpanEntry {
+        name: "span".to_string(),
+    });
 
     LogEntry {
         level,
         fields: Some(Fields { message, tip: None }),
+        target,
+        span,
     }
 }
 

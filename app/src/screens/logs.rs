@@ -95,6 +95,19 @@ fn truncate_with_ellipsis(s: &str, max_width: usize) -> String {
     }
 }
 
+fn format_message(log_entry: &LogEntry) -> String {
+    let target = log_entry.target.clone().unwrap_or_default();
+    format!(
+        "{} {}",
+        target,
+        log_entry
+            .span
+            .as_ref()
+            .map(|s| s.name.clone())
+            .unwrap_or_default()
+    )
+}
+
 impl crate::screens::Screen for LogsScreen {
     fn kind(&self) -> Kind {
         Kind::Logs
@@ -140,11 +153,6 @@ impl crate::screens::Screen for LogsScreen {
                 .logs
                 .iter()
                 .map(|log| {
-                    let msg = log
-                        .fields
-                        .as_ref()
-                        .map(|f| f.message.clone())
-                        .unwrap_or_default();
                     let line = Line::from(vec![
                         Span::raw("["),
                         Span::styled(
@@ -153,7 +161,7 @@ impl crate::screens::Screen for LogsScreen {
                         ),
                         Span::raw("] "),
                         Span::raw(truncate_with_ellipsis(
-                            &msg,
+                            &format_message(log),
                             max_width - 3 - log.level.to_string().len(),
                         )),
                     ]);
