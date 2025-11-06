@@ -37,11 +37,14 @@ fn create_lines<'a>(ac: AppContext, current_slot: Option<Slot>) -> (Vec<Line<'a>
         (vec![Line::from("Not connected")], false)
     } else if !ac.system.network_status.resolving {
         (vec![Line::from("Not resolving")], false)
-    }else if let Some(current_slot) = current_slot {
-        (vec![
-            Line::from("Slot"),
-            format!("#{}", current_slot).cyan().into(),
-        ], false)
+    } else if let Some(current_slot) = current_slot {
+        (
+            vec![
+                Line::from("Slot"),
+                format!("#{}", current_slot).cyan().into(),
+            ],
+            false,
+        )
     } else {
         (vec![Line::from("Bootstrapping")], true)
     }
@@ -90,7 +93,7 @@ impl crate::screens::Screen for TipScreen {
         frame.render_widget(text, chunks[1]);
 
         if details {
-            let details_line = Line::from("some more details").centered();
+            let details_line = Line::from("this may take a couple minutes").centered();
             frame.render_widget(details_line, chunks[2]);
         }
     }

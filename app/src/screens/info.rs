@@ -1,7 +1,7 @@
 use crate::screens::{AppContext, Kind, Screen, ScreenAction};
 use crate::update::{UpdateState, read_state_file};
 use ratatui::prelude::*;
-use ratatui::widgets::{Block, Borders, Paragraph};
+use ratatui::widgets::Paragraph;
 
 /// Displays version information for all managed applications.
 pub struct InfoScreen {
@@ -71,9 +71,7 @@ impl Screen for InfoScreen {
             }
         }
 
-        let paragraph = Paragraph::new(lines)
-            .block(Block::default().borders(Borders::ALL).title(" Info "))
-            .alignment(Alignment::Left);
+        let paragraph = Paragraph::new(lines).alignment(Alignment::Left);
 
         frame.render_widget(paragraph, area);
     }

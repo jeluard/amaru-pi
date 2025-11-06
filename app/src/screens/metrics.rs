@@ -71,7 +71,12 @@ impl MetricsScreen {
             .data(&data_slice);
 
         let chart = Chart::new(vec![dataset])
-            .block(Block::default().title(title).borders(Borders::ALL))
+            .block(
+                Block::default()
+                    .title(title)
+                    .title_alignment(Alignment::Right)
+                    .borders(Borders::ALL),
+            )
             .x_axis(Axis::default().bounds(x_bounds))
             .y_axis(
                 Axis::default()

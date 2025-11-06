@@ -1,6 +1,8 @@
 use anyhow::{Context, anyhow};
 use std::{
-    net::{TcpStream, ToSocketAddrs}, process::{Command, Stdio}, time::Duration
+    net::{TcpStream, ToSocketAddrs},
+    process::{Command, Stdio},
+    time::Duration,
 };
 
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
@@ -104,7 +106,7 @@ pub fn check_network_status() -> anyhow::Result<NetworkStatus> {
     Ok(NetworkStatus {
         state: parts[0].into(),
         connectivity: parts[1].into(),
-        resolving
+        resolving,
     })
 }
 
@@ -113,7 +115,7 @@ pub fn check_network_status() -> Result<NetworkStatus, Box<dyn std::error::Error
     Ok(NetworkStatus {
         state: NetworkState::ConnectedGlobal,
         connectivity: Connectivity::Full,
-        resolving: false
+        resolving: true,
     })
 }
 
