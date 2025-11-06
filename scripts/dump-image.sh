@@ -3,7 +3,6 @@ set -euo pipefail
 
 OS="$(uname -s)"
 DATE="$(date +%Y%m%d_%H%M%S)"
-OUT="sdcard_${DATE}.img"
 
 list_devices() {
     if [[ "$OS" == "Darwin" ]]; then
@@ -57,4 +56,4 @@ sudo chown "$USER:$(id -gn)" ${IMAGE}
 
 sync
 
-echo "✅ Done! Dump saved as: $OUT"
+echo "✅ Done! Dump saved as: ${IMAGE}"
