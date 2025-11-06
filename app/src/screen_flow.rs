@@ -50,7 +50,7 @@ impl Default for ScreenFlow {
                 Duration::from_millis(5000),
             )),
             Box::new(TipScreen::default()),
-            Box::new(MetricsScreen::default()),
+            Box::new(MetricsScreen),
             Box::new(LogsScreen::default()),
             Box::new(ScanScreen::default()),
             Box::new(WiFiSettingsScreen::default()),

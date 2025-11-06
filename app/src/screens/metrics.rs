@@ -1,172 +1,198 @@
-use crate::screens::{AppContext, Kind, ScreenAction};
-use axum::{
-    Router,
-    http::{HeaderMap, StatusCode},
-    routing::post,
+use crate::{
+    metrics_data::MetricData,
+    screens::{AppContext, Kind, Screen, ScreenAction},
 };
-use bytes::Bytes;
-use opentelemetry_proto::tonic::collector::metrics::v1::ExportMetricsServiceRequest;
-use prost::Message;
-use ratatui::Frame;
-use ratatui::layout::Rect;
-use ratatui::style::{Color, Modifier, Style, Stylize};
-use ratatui::symbols::{self};
-use ratatui::text::Span;
-use ratatui::widgets::{Axis, Block, Chart, Dataset};
-use std::net::SocketAddr;
+use ratatui::{
+    prelude::*,
+    symbols,
+    widgets::{Axis, Block, Borders, Chart, Dataset},
+};
 
-pub struct MetricsScreen {
-    data1: Vec<(f64, f64)>,
-    signal2: SinSignal,
-    data2: Vec<(f64, f64)>,
-    window: [f64; 2],
-}
-
-impl MetricsScreen {
-    pub async fn start(&self) -> Result<(), anyhow::Error> {
-        let app = Router::new().route(
-            "/v1/metrics",
-            post(async |_headers: HeaderMap, body: Bytes| {
-                match ExportMetricsServiceRequest::decode(body.as_ref()) {
-                    Ok(req) => {
-                        for resource_metrics in req.resource_metrics {
-                            //println!("Resource metrics: {:?}", resource_metrics.resource);
-                            for scope_metrics in resource_metrics.scope_metrics {
-                                for metric in scope_metrics.metrics {
-                                    println!("Metric: {} {:?}", metric.name, metric.data);
-                                }
-                            }
-                        }
-                        StatusCode::OK
-                    }
-                    Err(err) => {
-                        println!("Failed to decode protobuf: {:?}", err);
-                        StatusCode::BAD_REQUEST
-                    }
-                }
-            }),
-        );
-
-        let addr = SocketAddr::from(([0, 0, 0, 0], 4318));
-        println!("Listening on http://{}", addr);
-
-        axum::serve(tokio::net::TcpListener::bind(addr).await?, app).await?;
-
-        Ok(())
-    }
-}
+pub struct MetricsScreen;
 
 impl Default for MetricsScreen {
     fn default() -> Self {
-        let mut signal1 = SinSignal::new(0.2, 3.0, 18.0);
-        let mut signal2 = SinSignal::new(0.1, 2.0, 10.0);
-        let data1 = signal1.by_ref().take(200).collect::<Vec<(f64, f64)>>();
-        let data2 = signal2.by_ref().take(200).collect::<Vec<(f64, f64)>>();
-        Self {
-            data1,
-            signal2,
-            data2,
-            window: [0.0, 20.0],
-        }
+        Self
     }
 }
 
-#[derive(Clone)]
-struct SinSignal {
-    x: f64,
-    interval: f64,
-    period: f64,
-    scale: f64,
+/// Helper to add padding and generate 5 labels for the Y-axis
+fn get_padded_y_bounds(bounds: [f64; 2]) -> ([f64; 2], Vec<Line<'static>>) {
+    let [min, max] = bounds;
+
+    let (min_padded, max_padded) = if (max - min).abs() < f64::EPSILON {
+        // If the line is flat, create a small window around it
+        (min - 1.0, max + 1.0)
+    } else {
+        // Add 10% padding
+        let range = max - min;
+        let padding = range * 0.1;
+        (min - padding, max + padding)
+    };
+
+    let new_range = max_padded - min_padded;
+
+    // Create 5 labels
+    let labels = (0..=4)
+        .map(|i| {
+            let value = min_padded + (new_range * (i as f64 / 4.0));
+            Line::from(format!("{:.1}", value))
+        })
+        .collect();
+
+    ([min_padded, max_padded], labels)
 }
 
-impl SinSignal {
-    const fn new(interval: f64, period: f64, scale: f64) -> Self {
-        Self {
-            x: 0.0,
-            interval,
-            period,
-            scale,
-        }
-    }
-}
-
-impl Iterator for SinSignal {
-    type Item = (f64, f64);
-    fn next(&mut self) -> Option<Self::Item> {
-        let point = (self.x, (self.x * 1.0 / self.period).sin() * self.scale);
-        self.x += self.interval;
-        Some(point)
-    }
+struct ChartDatasetConfig<'a> {
+    data: Option<&'a MetricData>,
+    label: &'a str,
+    color: Color,
 }
 
 impl MetricsScreen {
-    fn on_tick(&mut self) {
-        self.data2.drain(0..10);
-        self.data2.extend(self.signal2.by_ref().take(10));
+    fn render_single_metric_chart(
+        &self,
+        frame: &mut Frame,
+        area: Rect,
+        config: ChartDatasetConfig,
+        title: &str,
+        y_axis_title: &str,
+    ) {
+        let Some(metric) = config.data else { return };
 
-        self.window[0] += 1.0;
-        self.window[1] += 1.0;
+        let (x_bounds, y_bounds) = metric.time_series_smoothed.get_bounds();
+        let (padded_y_bounds, y_labels) = get_padded_y_bounds(y_bounds);
+
+        let data_slice = metric.time_series_smoothed.data();
+        let dataset = Dataset::default()
+            .name(config.label)
+            .marker(symbols::Marker::Braille)
+            .style(Style::default().fg(config.color))
+            .data(&data_slice);
+
+        let chart = Chart::new(vec![dataset])
+            .block(Block::default().title(title).borders(Borders::ALL))
+            .x_axis(Axis::default().bounds(x_bounds))
+            .y_axis(
+                Axis::default()
+                    .title(y_axis_title)
+                    .style(Style::default().fg(Color::Gray))
+                    .bounds(padded_y_bounds)
+                    .labels(y_labels),
+            );
+        frame.render_widget(chart, area);
+    }
+
+    fn render_dual_metric_chart(
+        &self,
+        frame: &mut Frame,
+        area: Rect,
+        config_a: ChartDatasetConfig,
+        config_b: ChartDatasetConfig,
+        title: &str,
+        y_axis_title: &str,
+    ) {
+        let (Some(metric_a), Some(metric_b)) = (config_a.data, config_b.data) else {
+            return;
+        };
+
+        // Combine bounds
+        let (a_x_bounds, a_y_bounds) = metric_a.time_series_smoothed.get_bounds();
+        let (b_x_bounds, b_y_bounds) = metric_b.time_series_smoothed.get_bounds();
+        let x_bounds = [
+            a_x_bounds[0].min(b_x_bounds[0]),
+            a_x_bounds[1].max(b_x_bounds[1]),
+        ];
+        let y_bounds = [
+            a_y_bounds[0].min(b_y_bounds[0]),
+            a_y_bounds[1].max(b_y_bounds[1]),
+        ];
+        let (padded_y_bounds, y_labels) = get_padded_y_bounds(y_bounds);
+
+        let data_slice_a = metric_a.time_series_smoothed.data();
+        let data_slice_b = metric_b.time_series_smoothed.data();
+
+        let datasets = vec![
+            Dataset::default()
+                .name(config_a.label)
+                .marker(symbols::Marker::Braille)
+                .style(Style::default().fg(config_a.color))
+                .data(&data_slice_a),
+            Dataset::default()
+                .name(config_b.label)
+                .marker(symbols::Marker::Braille)
+                .style(Style::default().fg(config_b.color))
+                .data(&data_slice_b),
+        ];
+
+        let chart = Chart::new(datasets)
+            .block(Block::default().title(title).borders(Borders::ALL))
+            .x_axis(Axis::default().bounds(x_bounds))
+            .y_axis(
+                Axis::default()
+                    .title(y_axis_title)
+                    .style(Style::default().fg(Color::Gray))
+                    .bounds(padded_y_bounds)
+                    .labels(y_labels),
+            );
+        frame.render_widget(chart, area);
     }
 }
 
-impl crate::screens::Screen for MetricsScreen {
+impl Screen for MetricsScreen {
     fn kind(&self) -> Kind {
         Kind::Metrics
     }
 
     fn update(&mut self, _ac: AppContext) -> ScreenAction {
-        self.on_tick();
         ScreenAction::None
     }
 
-    fn display(&self, _ac: AppContext, frame: &mut Frame, area: Rect) {
-        self.render_animated_chart(frame, area);
-    }
-}
+    /// Render the screen
+    fn display(&self, ac: AppContext, frame: &mut Frame, area: Rect) {
+        let chunks = Layout::default()
+            .direction(Direction::Vertical)
+            .constraints([
+                Constraint::Percentage(33), // CPU
+                Constraint::Percentage(33), // Memory
+                Constraint::Percentage(34), // Disk
+            ])
+            .split(area);
 
-impl MetricsScreen {
-    fn render_animated_chart(&self, frame: &mut Frame, area: Rect) {
-        let x_labels = vec![
-            Span::styled(
-                format!("{}", self.window[0]),
-                Style::default().add_modifier(Modifier::BOLD),
-            ),
-            Span::raw(format!("{}", f64::midpoint(self.window[0], self.window[1]))),
-            Span::styled(
-                format!("{}", self.window[1]),
-                Style::default().add_modifier(Modifier::BOLD),
-            ),
-        ];
-        let datasets = vec![
-            Dataset::default()
-                .name("data2")
-                .marker(symbols::Marker::Dot)
-                .style(Style::default().fg(Color::Cyan))
-                .data(&self.data1),
-            Dataset::default()
-                .name("data3")
-                .marker(symbols::Marker::Braille)
-                .style(Style::default().fg(Color::Yellow))
-                .data(&self.data2),
-        ];
+        // --- Chart 1: CPU Usage ---
+        let cpu_config = ChartDatasetConfig {
+            data: ac.system.metrics.get("process_cpu_live"),
+            label: "CPU Cores",
+            color: Color::Cyan,
+        };
+        self.render_single_metric_chart(frame, chunks[0], cpu_config, " CPU Usage ", "Cores");
 
-        let chart = Chart::new(datasets)
-            .block(Block::bordered())
-            .x_axis(
-                Axis::default()
-                    .title("X Axis")
-                    .style(Style::default().fg(Color::Gray))
-                    .labels(x_labels)
-                    .bounds(self.window),
-            )
-            .y_axis(
-                Axis::default()
-                    .title("Y Axis")
-                    .style(Style::default().fg(Color::Gray))
-                    .labels(["-20".bold(), "0".into(), "20".bold()])
-                    .bounds([-20.0, 20.0]),
-            );
+        // --- Chart 2: Memory Usage ---
+        let mem_config = ChartDatasetConfig {
+            data: ac.system.metrics.get("process_memory_live_resident"),
+            label: "Memory (MB)",
+            color: Color::Green,
+        };
+        self.render_single_metric_chart(frame, chunks[1], mem_config, " Memory (MB)", "MB");
 
-        frame.render_widget(chart, area);
+        // --- Chart 3: Disk I/O ---
+        let read_config = ChartDatasetConfig {
+            data: ac.system.metrics.get("process_disk_live_read"),
+            label: "Read",
+            color: Color::Yellow,
+        };
+        let write_config = ChartDatasetConfig {
+            data: ac.system.metrics.get("process_disk_live_write"),
+            label: "Write",
+            color: Color::Cyan,
+        };
+        self.render_dual_metric_chart(
+            frame,
+            chunks[2],
+            read_config,
+            write_config,
+            " Disk I/O (B/s) ",
+            "B/s",
+        );
     }
 }
