@@ -84,17 +84,7 @@ impl App {
                         AppActionComplete::WifiConnection(status) => {
                             self.system_state.wifi_connection_status = status;
                         }
-                        AppActionComplete::MetricReceived(name, data_type, mut value) => {
-                            match name.as_str() {
-                                "process_memory_live_resident" => {
-                                    value /= 1024.0 * 1024.0; // Bytes to MB
-                                }
-                                "process_disk_live_read" | "process_disk_live_write" => {
-                                    value /= 1024.0; // Bytes to KB
-                                }
-                                _ => {}
-                            }
-
+                        AppActionComplete::MetricReceived(name, data_type, value) => {
                             self.system_state
                                 .metrics
                                 .entry(name)

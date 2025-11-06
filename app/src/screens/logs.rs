@@ -101,7 +101,7 @@ fn format_message(log_entry: &LogEntry) -> String {
         .as_ref()
         .map(|s| s.name.clone())
         .unwrap_or_default();
-    let message = if name == "" || name == "enter" || name == "exit" {
+    if name.is_empty() || name == "enter" || name == "exit" {
         log_entry
             .fields
             .as_ref()
@@ -109,8 +109,7 @@ fn format_message(log_entry: &LogEntry) -> String {
             .unwrap_or_default()
     } else {
         name
-    };
-    format!("{}", message)
+    }
 }
 
 impl crate::screens::Screen for LogsScreen {

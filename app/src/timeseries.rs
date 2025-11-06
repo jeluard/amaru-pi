@@ -57,19 +57,24 @@ impl TimeSeries {
     }
 
     pub fn get_bounds(&self) -> ([f64; 2], [f64; 2]) {
-        let x_bounds = self.get_map_bounds(&self.x_values);
-        let y_bounds = self.get_map_bounds(&self.y_values);
+        let x_bounds = self.get_map_bounds_x(&self.x_values);
+        let y_bounds = self.get_map_bounds_y(&self.y_values);
 
         (x_bounds, y_bounds)
     }
 
-    fn get_map_bounds(&self, map: &BTreeMap<OrderedFloat<f64>, usize>) -> [f64; 2] {
+    fn get_map_bounds_x(&self, map: &BTreeMap<OrderedFloat<f64>, usize>) -> [f64; 2] {
         if let Some((min_key, _)) = map.first_key_value() {
             let max_key = map.last_key_value().unwrap().0;
             [min_key.into_inner(), max_key.into_inner()]
         } else {
             [0.0, 1.0]
         }
+    }
+
+    fn get_map_bounds_y(&self, map: &BTreeMap<OrderedFloat<f64>, usize>) -> [f64; 2] {
+        let max_key = map.last_key_value().unwrap().0;
+        [0.0, max_key.into_inner()]
     }
 
     pub fn data(&self) -> Cow<'_, [(f64, f64)]> {
