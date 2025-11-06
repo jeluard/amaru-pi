@@ -101,7 +101,7 @@ fn format_message(log_entry: &LogEntry) -> String {
         .as_ref()
         .map(|s| s.name.clone())
         .unwrap_or_default();
-    let message = if name == "enter" || name == "exit" {
+    let message = if name == "" || name == "enter" || name == "exit" {
         log_entry
             .fields
             .as_ref()
