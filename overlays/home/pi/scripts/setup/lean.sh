@@ -7,6 +7,7 @@ sudo apt-get -qq purge -y libx11-data libxau6  libxcb1  libxdmcp6
 sudo apt-get -qq purge -y libqt6core6t64  mkvtoolnix
 sudo apt-get -qq purge -y rpicam-apps-core rpicam-apps-lite
 sudo apt-get -qq purge -y modemmanager
+sudo apt-get -qq install -y jq
 sudo apt-get -qq install -y fonts-dejavu-core #let's keep this one
 sudo apt-get -qq autoremove -y
 sudo apt-get -qq upgrade -y
