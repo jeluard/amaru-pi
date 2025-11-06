@@ -1,6 +1,10 @@
-use crate::{button::InputEvent, frame::FrameState, systemd::ServiceInfo, wifi::NetworkStatus};
+use crate::{
+    button::InputEvent, frame::FrameState, metrics_data::MetricData, systemd::ServiceInfo,
+    wifi::NetworkStatus,
+};
 use ratatui::{Frame, layout::Rect};
 use std::{
+    collections::HashMap,
     fmt::{self, Display},
     str::FromStr,
 };
@@ -83,6 +87,7 @@ pub struct SystemState {
     pub amaru_status: ServiceInfo,
     pub network_status: NetworkStatus,
     pub wifi_connection_status: WifiConnectionStatus,
+    pub metrics: HashMap<String, MetricData>,
 }
 
 #[derive(Clone, Copy)]
