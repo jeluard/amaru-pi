@@ -32,16 +32,18 @@ impl Default for TipScreen {
     }
 }
 
-fn create_lines<'a>(ac: AppContext, current_slot: Option<Slot>) -> Vec<Line<'a>> {
+fn create_lines<'a>(ac: AppContext, current_slot: Option<Slot>) -> (Vec<Line<'a>>, bool) {
     if ac.system.network_status.connectivity != Connectivity::Full {
-        vec![Line::from("Not connected")]
-    } else if let Some(current_slot) = current_slot {
-        vec![
+        (vec![Line::from("Not connected")], false)
+    } else if !ac.system.network_status.resolving {
+        (vec![Line::from("Not resolving")], false)
+    }else if let Some(current_slot) = current_slot {
+        (vec![
             Line::from("Slot"),
             format!("#{}", current_slot).cyan().into(),
-        ]
+        ], false)
     } else {
-        vec![Line::from("Bootstrapping")]
+        (vec![Line::from("Bootstrapping")], true)
     }
 }
 
@@ -73,16 +75,23 @@ impl crate::screens::Screen for TipScreen {
             .constraints([
                 Constraint::Percentage(30),
                 Constraint::Percentage(40),
-                Constraint::Percentage(30),
+                Constraint::Percentage(10),
+                Constraint::Percentage(20),
             ])
             .split(area);
 
+        let (lines, details) = create_lines(ac, self.current_slot);
         let text = BigText::builder()
             .pixel_size(PixelSize::Quadrant)
             .centered()
-            .lines(create_lines(ac, self.current_slot))
+            .lines(lines)
             .build();
 
         frame.render_widget(text, chunks[1]);
+
+        if details {
+            let details_line = Line::from("some more details").centered();
+            frame.render_widget(details_line, chunks[2]);
+        }
     }
 }

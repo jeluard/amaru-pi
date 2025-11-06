@@ -5,6 +5,7 @@ fn check_network_status_or_unknown() -> NetworkStatus {
     check_network_status().unwrap_or(NetworkStatus {
         state: NetworkState::Unknown,
         connectivity: Connectivity::Unknown,
+        resolving: false,
     })
 }
 pub struct NetworkStatusCache {

@@ -1,7 +1,6 @@
 use anyhow::{Context, anyhow};
 use std::{
-    process::{Command, Stdio},
-    time::Duration,
+    net::{TcpStream, ToSocketAddrs}, process::{Command, Stdio}, time::Duration
 };
 
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
@@ -26,10 +25,16 @@ impl From<&str> for Connectivity {
     }
 }
 
+pub fn is_port_open<A: ToSocketAddrs>(addr: A) -> anyhow::Result<bool> {
+    let timeout = Duration::from_secs(2);
+    Ok(TcpStream::connect_timeout(&addr.to_socket_addrs()?.next().unwrap(), timeout).is_ok())
+}
+
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 pub enum NetworkState {
     #[default]
     Unknown,
+    Connected,
     ConnectedGlobal,
     ConnectedLocal,
     ConnectedSite,
@@ -41,6 +46,7 @@ pub enum NetworkState {
 impl From<&str> for NetworkState {
     fn from(s: &str) -> Self {
         match s.trim() {
+            "connected" => NetworkState::Connected,
             "connected-global" => NetworkState::ConnectedGlobal,
             "connected-local" => NetworkState::ConnectedLocal,
             "connected-site" => NetworkState::ConnectedSite,
@@ -56,6 +62,7 @@ impl From<&str> for NetworkState {
 pub struct NetworkStatus {
     pub state: NetworkState,
     pub connectivity: Connectivity,
+    pub resolving: bool,
 }
 
 pub fn run_and_capture(program: &str, args: Vec<&str>) -> anyhow::Result<String> {
@@ -80,6 +87,8 @@ pub fn run_and_capture(program: &str, args: Vec<&str>) -> anyhow::Result<String>
 
 #[cfg(feature = "display_hat")]
 pub fn check_network_status() -> anyhow::Result<NetworkStatus> {
+    use std::env;
+
     let stdout = run_and_capture(
         "nmcli",
         ["-t", "-f", "STATE,CONNECTIVITY", "general", "status"].to_vec(),
@@ -90,9 +99,12 @@ pub fn check_network_status() -> anyhow::Result<NetworkStatus> {
         return Err(anyhow!(format!("unexpected nmcli output: {}", stdout),));
     }
 
+    let resolving = is_port_open(env::var("AMARU_PEER_ADDRESS").unwrap_or_default())?;
+
     Ok(NetworkStatus {
         state: parts[0].into(),
         connectivity: parts[1].into(),
+        resolving
     })
 }
 
@@ -101,6 +113,7 @@ pub fn check_network_status() -> Result<NetworkStatus, Box<dyn std::error::Error
     Ok(NetworkStatus {
         state: NetworkState::ConnectedGlobal,
         connectivity: Connectivity::Full,
+        resolving: false
     })
 }
 

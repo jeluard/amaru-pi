@@ -168,7 +168,8 @@ impl ScreenFlow {
             _ => Color::Yellow,
         };
         let network_status_color = match ctx.system.network_status.connectivity {
-            Connectivity::Full => Color::Green,
+            Connectivity::Full if ctx.system.network_status.resolving => Color::Green,
+            Connectivity::Full => Color::Blue,
             Connectivity::None => Color::Red,
             _ => Color::Yellow,
         };
