@@ -29,7 +29,7 @@ pub struct UpdateState {
 
 impl UpdateState {
     /// Checks if any application has a pending update ready.
-    fn is_update_available(&self) -> bool {
+    fn _is_update_available(&self) -> bool {
         self.applications.values().any(|app_state| {
             // An update is available if a pending version and staged path are set.
             !app_state.pending_version.is_empty() && !app_state.staged_path.is_empty()
@@ -41,18 +41,30 @@ impl UpdateState {
         let now = current_timestamp().unwrap_or(0);
         now < self.notify_after
     }
+
+    /// Gets the names of all applications with a pending update.
+    pub fn get_pending_app_names(&self) -> Vec<String> {
+        self.applications
+            .iter()
+            .filter(|(_, app_state)| {
+                // An update is available if a pending version and staged path are set.
+                !app_state.pending_version.is_empty() && !app_state.staged_path.is_empty()
+            })
+            .map(|(app_name, _)| app_name.clone())
+            .collect()
+    }
 }
 
-#[derive(PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum UpdateStatus {
     Idle,
-    UpdateReadyToNotify,
+    UpdateReadyToNotify(Vec<String>),
 }
 
 pub struct UpdateManager {
     last_check: Instant,
     interval: Duration,
-    current_state: UpdateState,
+    pub current_state: UpdateState,
 }
 
 impl UpdateManager {
@@ -73,11 +85,18 @@ impl UpdateManager {
             }
         }
 
-        if self.current_state.is_update_available() && !self.current_state.is_snoozed() {
-            UpdateStatus::UpdateReadyToNotify
-        } else {
-            UpdateStatus::Idle
+        // Check for snooze first
+        if self.current_state.is_snoozed() {
+            return UpdateStatus::Idle;
         }
+
+        let pending_apps = self.current_state.get_pending_app_names();
+
+        if pending_apps.is_empty() {
+            return UpdateStatus::Idle;
+        }
+
+        UpdateStatus::UpdateReadyToNotify(pending_apps)
     }
 
     /// Snoozes notifications by updating the `notify_after` timestamp in the
