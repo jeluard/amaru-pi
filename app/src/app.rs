@@ -103,10 +103,11 @@ impl App {
 
                 // Update check if no modal is active
                 if !self.modal.is_active()
-                    && let UpdateStatus::UpdateReadyToNotify =
+                    && let UpdateStatus::UpdateReadyToNotify(app_names) =
                         self.update_manager.check_for_update()
+                    && !app_names.is_empty()
                 {
-                    self.modal = Modal::UpdatePopup;
+                    self.modal = Modal::UpdatePopup(app_names);
                 }
             }
             AppEvent::Input(event) => {
