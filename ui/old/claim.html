@@ -32,6 +32,7 @@
       /* top margin + horizontal center */
     }
   </style>
+  <script src="https://unpkg.com/@biglup/cometa@1.1.102/dist/iife/index.global.js"></script>
 </head>
 
 <body>
@@ -50,156 +51,26 @@
   </div>
 
   <script>
-    const input = document.getElementById('input-words');
-    const button = document.getElementById('send-btn');
-    const errorMsg = document.getElementById('error-msg');
-    const form = document.getElementById('tx-form');
-
-    const successSection = document.getElementById('success-section');
-    const waitingMsg = document.getElementById('waiting-msg');
-    const txDetails = document.getElementById('tx-details');
-    const nftImage = document.getElementById('nft-image');
-
-    // Prefill input from URL param
-    const urlParams = new URLSearchParams(window.location.search);
-    const wordsParam = urlParams.get('words');
-    if (wordsParam) input.value = wordsParam;
-
-    // Validate input
-    function validateInput() {
-      if (input.validity.valid) {
-        errorMsg.style.display = 'none';
-        button.disabled = false;
-      } else {
-        errorMsg.style.display = 'block';
-        button.disabled = true;
-      }
-    }
-    input.addEventListener('input', validateInput);
-    window.addEventListener('load', validateInput);
-
-    // Utility to wait
-    function sleep(ms) { return new Promise(resolve => setTimeout(resolve, ms)); }
-
-    // Check transaction status until confirmed
-    async function waitForTransaction(wallet, txHash) {
-      let confirmed = false;
-      while (!confirmed) {
-        try {
-          const txInfo = await wallet.getTx(txHash);
-          if (txInfo && txInfo.confirmed) {
-            confirmed = true;
-            return txInfo;
-          }
-        } catch (e) {
-          console.log("Polling transaction...", e.message);
-        }
-        await sleep(5000);
-      }
-    }
-
-    // Check wallet for NFT by policyId or assetName
-    async function checkWalletForNFT(wallet, policyId, assetName) {
-      const assets = await wallet.getAssets();
-      for (let asset of assets) {
-        if (asset.unit.startsWith(policyId) && asset.assetName === assetName) {
-          return asset;
-        }
-      }
-      return null;
-    }
-
-    // Show transaction details & NFT
-    function showSuccess(txInfo, nftUrl) {
-      form.style.display = 'none';
-      successSection.style.display = 'block';
-      waitingMsg.style.display = 'none';
-      txDetails.innerHTML = `
-    <p><strong>Transaction Hash:</strong> ${txInfo.hash}</p>
-    <p><strong>Amount:</strong> ${txInfo.value.lovelace / 1_000_000} ADA</p>
-    <p><strong>Metadata Words:</strong> ${txInfo.metadata?.[674]?.words || ''}</p>
-  `;
-      nftImage.src = nftUrl;
-      nftImage.style.display = 'block';
-    }
-
-    // On load, check if user already submitted a transaction
-    async function detectExistingTxOrNFT() {
-      const lastTxHash = localStorage.getItem('lastTxHash');
-      const wallet = new Mesh.Wallet({ network: "Mainnet" });
-      await wallet.connect();
-
-      if (lastTxHash) {
-        // Check tx status
-        const txInfo = await wallet.getTx(lastTxHash);
-        if (txInfo && !txInfo.confirmed) {
-          // Transaction pending
-          form.style.display = 'none';
-          successSection.style.display = 'block';
-          waitingMsg.style.display = 'block';
-          txDetails.innerHTML = `<p>Transaction pending: ${lastTxHash}</p>`;
-          const confirmedTx = await waitForTransaction(wallet, lastTxHash);
-          showSuccess(confirmedTx, confirmedTx.metadata?.[674]?.nftImage || "https://via.placeholder.com/300x200.png?text=NFT");
-          return;
-        } else if (txInfo && txInfo.confirmed) {
-          // Already confirmed
-          showSuccess(txInfo, txInfo.metadata?.[674]?.nftImage || "https://via.placeholder.com/300x200.png?text=NFT");
-          return;
-        }
-      }
-
-      // Check wallet for NFT (example: policyId + assetName from metadata)
-      const nftAsset = await checkWalletForNFT(wallet, 'YOUR_POLICY_ID_HERE', 'NFT_ASSET_NAME_HERE');
-      if (nftAsset) {
-        showSuccess({ hash: nftAsset.txHash, value: { lovelace: 0 }, metadata: {} }, "https://via.placeholder.com/300x200.png?text=NFT");
-      }
-    }
-
-    // Run detection on page load
-    window.addEventListener('load', detectExistingTxOrNFT);
-
-    // Form submit handler (same as previous)
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const words = input.value.trim();
-      if (!words) return;
-
-      button.disabled = true;
-      button.textContent = "Sending...";
-
-      try {
-        const wallet = new Mesh.Wallet({ network: "Mainnet" });
-        await wallet.connect();
-
-        const tx = new Mesh.Transaction({ initiator: wallet });
-        tx.addOutput({
-          address: wallet.getChangeAddress(),
-          value: { lovelace: 1000000 }
-        });
-        tx.addMetadata({ 674: { words } });
-
-        const txHash = await tx.submit();
-        console.log("Transaction submitted:", txHash);
-
-        localStorage.setItem('lastTxHash', txHash);
-
-        form.style.display = 'none';
-        successSection.style.display = 'block';
-        waitingMsg.style.display = 'block';
-        txDetails.innerHTML = '';
-
-        const confirmedTx = await waitForTransaction(wallet, txHash);
-        showSuccess(confirmedTx, confirmedTx.metadata?.[674]?.nftImage || "https://via.placeholder.com/300x200.png?text=NFT");
-
-      } catch (err) {
-        console.error(err);
-        alert("Transaction failed: " + err.message);
-        button.disabled = false;
-        button.textContent = "Send Transaction";
-        form.style.display = 'block';
-        successSection.style.display = 'none';
-      }
+    const provider = new Cometa.BlockfrostProvider({
+      network: Cometa.NetworkMagic.Preprod,
+      projectId: 'YOUR_BLOCKFROST_PROJECT_ID'
     });
+
+    Cometa.ready().then(() => {
+      console.log('Cometa is ready!');
+      const version = Cometa.getLibCardanoCVersion();
+      console.log('Library version:', version);
+    });
+
+    const WALLET_NAME = 'lace';
+
+    // Request access, enabling the CIP-95 (governance) extension
+    const cip30Api = await window.cardano[WALLET_NAME].enable({
+      extensions: [{ cip: 95 }]
+    });
+
+    // Create a Cometa wallet instance from the CIP-30 API
+    const wallet = new Cometa.BrowserExtensionWallet(cip30Api, provider);
   </script>
 </body>
 
