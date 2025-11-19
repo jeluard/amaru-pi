@@ -32,7 +32,7 @@ impl crate::screens::Screen for ScanScreen {
             .flex(Flex::Center)
             .areas(top_area);
 
-        let base_url = "https://jeluard.github.io/amaru-pi/#page=app";
+        let base_url = "https://amaru.global/";
         let url = match env::var("AMARU_WORDS") {
             Ok(words) if !words.is_empty() => format!("{}?words={}", base_url, words),
             _ => base_url.to_string(),
