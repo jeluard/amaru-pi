@@ -3,12 +3,12 @@
 set -euo pipefail
 
 if [ -z "${AMARU_WIFI_SSID:-}" ]; then
-    echo "❌ Error: $AMARU_WIFI_SSID is not set."
+    echo "❌ Error: \$AMARU_WIFI_SSID is not set."
     exit 1
 fi
 
 if [ -z "${AMARU_WIFI_PASSWORD:-}" ]; then
-    echo "❌ Error: $AMARU_WIFI_PASSWORD is not set."
+    echo "❌ Error: |$AMARU_WIFI_PASSWORD is not set."
     exit 1
 fi
 
