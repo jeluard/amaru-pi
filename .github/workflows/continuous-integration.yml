@@ -25,25 +25,61 @@ jobs:
         environments:
           - runner: ubuntu-latest
             title: ubuntu/aarch64-gnu
-            setup: sudo apt update && sudo apt install -y gcc-aarch64-linux-gnu
+            setup: |
+              sudo apt-get update -y
+              sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu \
+                binutils-aarch64-linux-gnu pkg-config cmake make
+              rustup target add aarch64-unknown-linux-gnu
 
           - runner: macos-latest
             title: MacOS/aarch64-gnu
-            setup: brew install zig && pip install cargo-zigbuild
+            setup: |
+              brew update
+              brew install zig
+
+              # create and activate a venv in $HOME to avoid PEP 668 errors
+              python3 -m venv $HOME/ci-venv
+              $HOME/ci-venv/bin/python -m pip install --upgrade pip
+              $HOME/ci-venv/bin/python -m pip install cargo-zigbuild
+
+              # add venv bin to PATH for subsequent steps
+              echo "PATH=$HOME/ci-venv/bin:$PATH" >> $GITHUB_ENV
 
     runs-on: ${{ matrix.environments.runner }}
     steps:
       - uses: actions/checkout@v4
         with:
           submodules: true
+
+      # Cache Cargo registry and target
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            ./target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}-${{ matrix.environments.title }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+
+      - name: Environment setup (matrix)
+        if: ${{ matrix.environments.setup != '' }}
+        shell: bash
+        run: |
+          echo "Running setup for ${{ matrix.environments.title }}"
+          set -euo pipefail
+          # expand and run the matrix.setup block
+          ${{ matrix.environments.setup }}
+
+      - name: Show toolchain & targets
+        run: |
+          rustc --version || true
+          cargo --version || true
+          rustup target list --installed || true
+
       - name: Run build
         shell: bash
         run: |
           set -e
-
-          if [[ -n "${{ matrix.environments.setup }}" ]]; then
-            echo "Running setup command: ${{ matrix.environments.setup }}"
-            ${{ matrix.environments.setup }}
-          fi
-
           make build

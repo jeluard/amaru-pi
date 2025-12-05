@@ -6,6 +6,7 @@ publish = false
 default-run = "amaru-pi"
 
 [dependencies]
+amaru-doctor = { git = "https://github.com/jeluard/amaru-doctor" }
 amaru-kernel = { git = "https://github.com/pragma-org/amaru" }
 tui-qrcode = { git = "https://github.com/jeluard/tui-widgets", branch = "jeluard/upgrade-ratatui"}
 tui-big-text = { git = "https://github.com/jeluard/tui-widgets", branch = "jeluard/upgrade-ratatui"}
@@ -32,6 +33,7 @@ serde = { version = "1.0.228", features = ["derive"] }
 clap = { version = "4.5.51", features = ["derive", "env"] }
 tracing = "0.1.41"
 ordered-float = "5.1.0"
+tracing-subscriber = "0.3.22"
 
 [features]
 default = ["simulator"]

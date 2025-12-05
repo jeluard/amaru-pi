@@ -200,27 +200,20 @@ pub fn set_connection(ssid: &str, password: &str) -> anyhow::Result<()> {
     run_and_capture(
         "nmcli",
         [
-            "con", "add", "type", "wifi", "ifname", "wlan0", "con-name", "mobile", "ssid", ssid,
-        ]
-        .to_vec(),
-    )?;
-
-    run_and_capture(
-        "nmcli",
-        [
-            "con",
-            "modify",
+            "dev",
+            "wifi",
+            "connect",
+            ssid,
+            "password",
+            password,
+            "ifname",
+            "wlan0",
+            "name",
             CONNECTION_NAME,
-            "wifi-sec.key-mgmt",
-            "wpa-psk",
         ]
         .to_vec(),
     )?;
 
-    run_and_capture(
-        "nmcli",
-        ["con", "modify", CONNECTION_NAME, "wifi-sec.psk", password].to_vec(),
-    )?;
     Ok(())
 }
 

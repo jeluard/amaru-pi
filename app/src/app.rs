@@ -1,6 +1,5 @@
 use crate::button::InputEvent;
 use crate::frame::FrameState;
-use crate::metrics_data::MetricData;
 use crate::modal::Modal;
 use crate::network_status::NetworkStatusCache;
 use crate::screen_flow::ScreenFlow;
@@ -8,7 +7,6 @@ use crate::screens::{AppContext, ScreenAction, SystemState, WifiConnectionStatus
 use crate::systemd::ServiceInfo;
 use crate::update::{UpdateManager, UpdateStatus};
 use ratatui::prelude::*;
-use std::collections::HashMap;
 use std::time::{Duration, Instant};
 use tokio::sync::mpsc;
 
@@ -28,7 +26,6 @@ pub enum AppAction {
 #[derive(Debug)]
 pub enum AppActionComplete {
     WifiConnection(WifiConnectionStatus),
-    MetricReceived(String, String, f64),
 }
 
 pub struct App {
@@ -53,7 +50,6 @@ impl Default for App {
             amaru_status: ServiceInfo::default(),
             network_status: connectivity_cache.last_result,
             wifi_connection_status: WifiConnectionStatus::default(),
-            metrics: HashMap::new(),
         };
         let (action_tx, action_rx) = mpsc::channel(100);
         Self {
@@ -83,13 +79,6 @@ impl App {
                     match action_result {
                         AppActionComplete::WifiConnection(status) => {
                             self.system_state.wifi_connection_status = status;
-                        }
-                        AppActionComplete::MetricReceived(name, data_type, value) => {
-                            self.system_state
-                                .metrics
-                                .entry(name)
-                                .or_insert_with(|| MetricData::new(data_type, value))
-                                .add_value(value);
                         }
                     }
                 }

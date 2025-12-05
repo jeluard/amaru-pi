@@ -1,4 +1,4 @@
-use crate::logs::{JournalReader, extract_tip_changed};
+use crate::logs::{JournalReader, extract_new_tip, extract_tip_changed};
 use crate::screens::{AppContext, Kind, ScreenAction};
 use crate::wifi::Connectivity;
 use amaru_kernel::Slot;
@@ -11,12 +11,12 @@ use tui_big_text::{BigText, PixelSize};
 
 pub struct TipScreen {
     reader: JournalReader,
-    current_slot: Option<Slot>,
+    current_slot: Option<(Slot, bool)>,
     last_refresh: Instant,
 }
 
 impl TipScreen {
-    fn update_slot(&mut self, slot: Slot) {
+    fn update_slot(&mut self, slot: (Slot, bool)) {
         self.current_slot = Some(slot);
     }
 }
@@ -32,16 +32,20 @@ impl Default for TipScreen {
     }
 }
 
-fn create_lines<'a>(ac: AppContext, current_slot: Option<Slot>) -> (Vec<Line<'a>>, bool) {
+fn create_lines<'a>(ac: AppContext, current_slot: Option<(Slot, bool)>) -> (Vec<Line<'a>>, bool) {
     if ac.system.network_status.connectivity != Connectivity::Full {
         (vec![Line::from("Not connected")], false)
     } else if !ac.system.network_status.resolving {
         (vec![Line::from("Not resolving")], false)
-    } else if let Some(current_slot) = current_slot {
+    } else if let Some((current_slot, synced)) = current_slot {
         (
             vec![
                 Line::from("Slot"),
-                format!("#{}", current_slot).cyan().into(),
+                if synced {
+                    format!("#{}", current_slot).green().into()
+                } else {
+                    format!("#{}", current_slot).cyan().into()
+                },
             ],
             false,
         )
@@ -60,13 +64,22 @@ impl crate::screens::Screen for TipScreen {
         if now - self.last_refresh > Duration::from_secs(1) {
             self.last_refresh = now;
             let lines = self.reader.next_lines().unwrap_or_default();
-            let tips: Vec<_> = lines
+            let new_tips: Vec<_> = lines
                 .iter()
-                .flat_map(|line| extract_tip_changed(line))
+                .flat_map(|line| extract_new_tip(line))
                 .collect();
-            if let Some(tip) = tips.last() {
+            if let Some(tip) = new_tips.last() {
                 // Set to last tip collected
-                self.update_slot((*tip).into());
+                self.update_slot(((*tip).into(), true));
+            } else {
+                let tips: Vec<_> = lines
+                    .iter()
+                    .flat_map(|line| extract_tip_changed(line))
+                    .collect();
+                if let Some(tip) = tips.last() {
+                    // Set to last tip collected
+                    self.update_slot(((*tip).into(), false));
+                }
             }
         }
         ScreenAction::None

@@ -1,6 +1,6 @@
 use crate::actions::handle_action;
 use crate::app::{App, AppAction, AppEvent};
-use crate::{backends, services};
+use crate::{backends};
 use anyhow::Result;
 use ratatui::Terminal;
 use std::sync::Arc;
@@ -14,7 +14,6 @@ pub async fn run() -> Result<()> {
 
     let mut terminal = Terminal::new(backend)?;
     let mut app = App::default();
-    services::start_all_background_tasks(app.action_tx.clone());
     let running = Arc::new(AtomicBool::new(true));
     let mut events: Vec<AppEvent> = Vec::with_capacity(4);
     while running.load(Ordering::SeqCst) {

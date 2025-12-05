@@ -4,21 +4,19 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Amaru PI - build</title>
-  <style>
-    html { height: 100%; }
-    body { display: flex; height: 100%; justify-content: center; align-items: center; }
-  </style>
-  <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"></script>
+  <script type="module" src="https://cdn.jsdelivr.net/npm/zero-md@3?register"></script>
 </head>
 <body>
-  <h2>TODO Build</h2>
-  <div>
-    <!--
-    https://modelviewer.dev/examples/animation/index.html
-    https://trimesh.org/
-    https://chatgpt.com/c/68f90c48-9f2c-832a-9f99-20c1cc6c0420
-    -->
-    <model-viewer alt="Neil Armstrong's Spacesuit from the Smithsonian Digitization Programs Office and National Air and Space Museum" src="https://modelviewer.dev/shared-assets/models/NeilArmstrong.glb" ar environment-image="https://modelviewer.dev/shared-assets/environments/moon_1k.hdr" poster="https://modelviewer.dev/shared-assets/models/NeilArmstrong.webp" shadow-intensity="1" camera-controls touch-action="pan-y"></model-viewer>
-  </div>
+  <zero-md src="build.md">
+    <template>
+      <style>
+        .markdown-body p img { display: block; margin: auto; max-width: 50%; height: auto; }
+      </style>
+
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@5/github-markdown.min.css" />
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets@11/styles/github.min.css" />
+
+    </template>
+  </zero-md>
 </body>
 </html>

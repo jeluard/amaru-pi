@@ -7,9 +7,16 @@
   <script type="module" src="https://cdn.jsdelivr.net/npm/zero-md@3?register"></script>
 </head>
 <body>
-  <zero-md src="quick-start.md"></zero-md>
-  <div style="text-align: center;">
+  <zero-md src="quick-start.md">
+    <template>
+      <style>
+        .markdown-body p img { display: block; margin: auto; max-width: 50%; height: auto; }
+      </style>
 
-  </div>
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@5/github-markdown.min.css" />
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets@11/styles/github.min.css" />
+
+    </template>
+  </zero-md>
 </body>
 </html>
