@@ -4,7 +4,7 @@ mod input;
 mod layout;
 mod render;
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum KeyboardAction {
     KeyPress(String),
     Space,

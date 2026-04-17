@@ -6,7 +6,13 @@ use ratatui::Terminal;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 
+#[cfg(feature = "display_hat")]
+use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
+
 pub async fn run() -> Result<()> {
+    #[cfg(feature = "display_hat")]
+    let _raw_mode_guard = RawModeGuard::new()?;
+
     #[cfg(feature = "display_hat")]
     let (backend, input_rx) = backends::display_hat::setup_hardware_and_input()?;
     #[cfg(feature = "simulator")]
@@ -44,4 +50,22 @@ pub async fn run() -> Result<()> {
     terminal.clear()?;
 
     Ok(())
+}
+
+#[cfg(feature = "display_hat")]
+struct RawModeGuard;
+
+#[cfg(feature = "display_hat")]
+impl RawModeGuard {
+    fn new() -> Result<Self> {
+        enable_raw_mode()?;
+        Ok(Self)
+    }
+}
+
+#[cfg(feature = "display_hat")]
+impl Drop for RawModeGuard {
+    fn drop(&mut self) {
+        disable_raw_mode().ok();
+    }
 }

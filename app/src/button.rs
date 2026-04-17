@@ -21,11 +21,98 @@ pub enum ButtonPress {
     Double,
 }
 
-/// The button pressed and the type of press
-#[derive(Debug, Clone, Copy)]
-pub struct InputEvent {
+/// A physical Display HAT button event.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct ButtonEvent {
     pub id: ButtonId,
     pub press_type: ButtonPress,
+}
+
+/// A keyboard event coming from a simulator window or a USB keyboard.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum KeyboardInput {
+    Char(char),
+    Enter,
+    Backspace,
+    Escape,
+    Left,
+    Right,
+    Up,
+    Down,
+    Tab,
+    BackTab,
+}
+
+/// A high-level input event understood by the app.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum InputEvent {
+    Button(ButtonEvent),
+    Key(KeyboardInput),
+}
+
+impl InputEvent {
+    pub const fn button(id: ButtonId, press_type: ButtonPress) -> Self {
+        Self::Button(ButtonEvent { id, press_type })
+    }
+
+    pub const fn key(key: KeyboardInput) -> Self {
+        Self::Key(key)
+    }
+
+    pub const fn as_button(self) -> Option<ButtonEvent> {
+        match self {
+            Self::Button(event) => Some(event),
+            Self::Key(_) => None,
+        }
+    }
+
+    pub const fn as_key(self) -> Option<KeyboardInput> {
+        match self {
+            Self::Button(_) => None,
+            Self::Key(key) => Some(key),
+        }
+    }
+}
+
+pub fn apply_shift_to_ascii(base: char, shift: bool, caps_lock: bool) -> char {
+    if base.is_ascii_alphabetic() {
+        if shift ^ caps_lock {
+            base.to_ascii_uppercase()
+        } else {
+            base
+        }
+    } else if shift {
+        shifted_ascii_symbol(base).unwrap_or(base)
+    } else {
+        base
+    }
+}
+
+fn shifted_ascii_symbol(base: char) -> Option<char> {
+    Some(match base {
+        '1' => '!',
+        '2' => '@',
+        '3' => '#',
+        '4' => '$',
+        '5' => '%',
+        '6' => '^',
+        '7' => '&',
+        '8' => '*',
+        '9' => '(',
+        '0' => ')',
+        '-' => '_',
+        '=' => '+',
+        '[' => '{',
+        ']' => '}',
+        ';' => ':',
+        '\'' => '"',
+        ',' => '<',
+        '.' => '>',
+        '/' => '?',
+        '\\' => '|',
+        '`' => '~',
+        _ => return None,
+    })
 }
 
 pub struct Button {
@@ -111,5 +198,20 @@ impl Button {
             event = Some(ButtonPress::Short);
         }
         event
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::apply_shift_to_ascii;
+
+    #[test]
+    fn shifts_letters_symbols_and_caps_lock() {
+        assert_eq!(apply_shift_to_ascii('a', true, false), 'A');
+        assert_eq!(apply_shift_to_ascii('a', false, true), 'A');
+        assert_eq!(apply_shift_to_ascii('a', true, true), 'a');
+        assert_eq!(apply_shift_to_ascii('1', true, false), '!');
+        assert_eq!(apply_shift_to_ascii('-', true, false), '_');
+        assert_eq!(apply_shift_to_ascii('1', false, false), '1');
     }
 }

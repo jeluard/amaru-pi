@@ -1,4 +1,4 @@
-use crate::button::{ButtonId, ButtonPress, InputEvent};
+use crate::button::{ButtonId, ButtonPress, InputEvent, KeyboardInput};
 use crate::update::UpdateManager;
 use crate::util::centered_rect;
 use ratatui::prelude::*;
@@ -17,18 +17,37 @@ impl Modal {
         match self {
             Modal::None => false, // Not handled
             Modal::UpdatePopup(_) => {
-                match (event.id, event.press_type) {
-                    (ButtonId::A, ButtonPress::Short) => {
-                        println!("Received update request");
-                        UpdateManager::request_update().ok();
-                        *self = Modal::None; // Close the modal
+                if let Some(button) = event.as_button() {
+                    match (button.id, button.press_type) {
+                        (ButtonId::A, ButtonPress::Short) => {
+                            println!("Received update request");
+                            UpdateManager::request_update().ok();
+                            *self = Modal::None;
+                        }
+                        (ButtonId::B, ButtonPress::Short) => {
+                            println!("Received snooze request");
+                            update_manager.snooze().ok();
+                            *self = Modal::None;
+                        }
+                        _ => {}
                     }
-                    (ButtonId::B, ButtonPress::Short) => {
-                        println!("Received snooze request");
-                        update_manager.snooze().ok();
-                        *self = Modal::None; // Close the modal
+                } else if let Some(key) = event.as_key() {
+                    match key {
+                        KeyboardInput::Enter | KeyboardInput::Char('y') | KeyboardInput::Char('Y') => {
+                            println!("Received update request");
+                            UpdateManager::request_update().ok();
+                            *self = Modal::None;
+                        }
+                        KeyboardInput::Escape
+                        | KeyboardInput::Backspace
+                        | KeyboardInput::Char('n')
+                        | KeyboardInput::Char('N') => {
+                            println!("Received snooze request");
+                            update_manager.snooze().ok();
+                            *self = Modal::None;
+                        }
+                        _ => {}
                     }
-                    _ => {}
                 }
                 true // Handled
             }

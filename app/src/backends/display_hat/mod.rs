@@ -14,6 +14,7 @@ use std::collections::HashMap;
 use std::sync::mpsc::Receiver;
 
 pub mod input;
+mod tty_keyboard;
 
 const W: i32 = 240;
 const H: i32 = 320;
