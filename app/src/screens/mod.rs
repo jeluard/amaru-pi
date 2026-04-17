@@ -70,6 +70,32 @@ pub enum WifiConnectionStatus {
     Failed(String),
 }
 
+#[derive(Debug, Default, Clone, PartialEq, Eq)]
+pub enum WifiModeStatus {
+    #[default]
+    StartupProbe,
+    HotspotStarting,
+    HotspotActive,
+    ClientConnecting,
+    ClientOnline,
+    Recovering,
+    Fault(String),
+}
+
+impl WifiModeStatus {
+    pub fn label(&self) -> &str {
+        match self {
+            WifiModeStatus::StartupProbe => "Checking uplink",
+            WifiModeStatus::HotspotStarting => "Waiting for fallback",
+            WifiModeStatus::HotspotActive => "Dedicated hotspot",
+            WifiModeStatus::ClientConnecting => "Connecting upstream",
+            WifiModeStatus::ClientOnline => "Upstream Wi-Fi",
+            WifiModeStatus::Recovering => "Recovering uplink",
+            WifiModeStatus::Fault(_) => "Wi-Fi mode fault",
+        }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ScreenAction {
     None,
@@ -83,6 +109,7 @@ pub struct SystemState {
     pub amaru_status: ServiceInfo,
     pub network_status: NetworkStatus,
     pub wifi_connection_status: WifiConnectionStatus,
+    pub wifi_mode_status: WifiModeStatus,
 }
 
 #[derive(Clone, Copy)]

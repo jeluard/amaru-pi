@@ -10,6 +10,7 @@ ${SCRIPT_DIR}/setup/ssh.sh
 ${SCRIPT_DIR}/setup/py-displayhatmini.sh
 ${SCRIPT_DIR}/setup/amaru.sh
 ${SCRIPT_DIR}/setup/services.sh
+${SCRIPT_DIR}/setup/hotspot.sh
 
 echo "✅ Setup complete."
 

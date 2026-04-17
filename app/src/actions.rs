@@ -1,5 +1,5 @@
-use crate::app::{App, AppAction, AppActionComplete}; // <-- Add AppActionComplete
-use crate::screens::WifiConnectionStatus;
+use crate::app::{App, AppAction, AppActionComplete};
+use crate::screens::{WifiConnectionStatus, WifiModeStatus};
 use crate::systemd;
 use crate::wifi;
 use std::time::Duration;
@@ -9,6 +9,19 @@ pub async fn handle_action(app: &mut App, effect: AppAction) {
         // TODO: These should be in background threads
         AppAction::CheckNetworkStatus => {
             app.system_state.network_status = app.connectivity_cache.get().await;
+        }
+        AppAction::CheckWifiModeStatus => {
+            let result = tokio::task::spawn_blocking(wifi::current_operating_mode).await;
+
+            match result {
+                Ok(Ok(operating_mode)) => app.sync_wifi_mode_status(operating_mode),
+                Ok(Err(error)) => {
+                    app.system_state.wifi_mode_status = WifiModeStatus::Fault(error.to_string());
+                }
+                Err(error) => {
+                    app.system_state.wifi_mode_status = WifiModeStatus::Fault(error.to_string());
+                }
+            }
         }
         AppAction::CheckAmaruStatus => {
             app.system_state.amaru_status = tokio::task::spawn_blocking(|| {
@@ -23,6 +36,7 @@ pub async fn handle_action(app: &mut App, effect: AppAction) {
 
             tokio::spawn(async move {
                 let result = tokio::task::spawn_blocking(move || {
+                    let _ = wifi::stop_hotspot(Duration::from_secs(10));
                     wifi::set_connection(&ssid, &pw)
                         .and_then(|()| wifi::up_connection(Duration::from_secs(30)))
                 })

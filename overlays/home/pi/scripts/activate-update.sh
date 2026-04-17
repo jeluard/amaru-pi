@@ -6,7 +6,8 @@ BIN_DIR="/home/pi/bin"
 TRIGGER_FILE="/home/pi/.update_requested"
 LOCK_FILE="/tmp/amaru_update.lock"
 
-declare -a MANAGED_SERVICES=("amaru-pi.service")
+declare -a STOP_UNITS=("amaru-pi.service" "getty@tty1.service" "amaru.service")
+declare -a START_UNITS=("getty@tty1.service" "amaru.service")
 
 exec 200>"$LOCK_FILE"
 flock -n 200 || { echo "ERROR: Another update is in progress."; exit 1; }
@@ -29,10 +30,10 @@ validate_state_file() {
 }
 
 stop_services() {
-    log "INFO: Stopping all managed services..."
-    for service in "${MANAGED_SERVICES[@]}"; do
-        if ! systemctl stop "$service"; then
-            log "WARN: Failed to stop $service. Continuing..."
+    log "INFO: Stopping application units..."
+    for unit in "${STOP_UNITS[@]}"; do
+        if ! systemctl stop "$unit"; then
+            log "WARN: Failed to stop $unit. Continuing..."
         fi
     done
 }
@@ -95,10 +96,10 @@ apply_updates_and_promote_versions() {
 }
 
 start_services() {
-    log "INFO: Starting all managed services..."
-    for service in "${MANAGED_SERVICES[@]}"; do
-        if ! systemctl start "$service"; then
-            log "ERROR: Failed to start $service. Manual intervention may be required."
+    log "INFO: Starting application units..."
+    for unit in "${START_UNITS[@]}"; do
+        if ! systemctl start "$unit"; then
+            log "ERROR: Failed to start $unit. Manual intervention may be required."
         fi
     done
 }

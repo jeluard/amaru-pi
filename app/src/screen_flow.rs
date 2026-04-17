@@ -1,4 +1,4 @@
-use crate::button::{ButtonId, ButtonPress, InputEvent};
+use crate::button::{ButtonId, ButtonPress, InputEvent, KeyboardInput};
 use crate::screens::info::InfoScreen;
 use crate::screens::logo::LogoScreen;
 use crate::screens::logs::LogsScreen;
@@ -6,7 +6,7 @@ use crate::screens::metrics::MetricsScreen;
 use crate::screens::scan::ScanScreen;
 use crate::screens::tip::TipScreen;
 use crate::screens::wifi_settings::WiFiSettingsScreen;
-use crate::screens::{AppContext, Kind, Screen, ScreenAction};
+use crate::screens::{AppContext, Kind, Screen, ScreenAction, WifiModeStatus};
 use crate::systemd::ActiveState;
 use crate::top_bar::TopBar;
 use crate::wifi::Connectivity;
@@ -132,16 +132,26 @@ impl ScreenFlow {
             current_screen.handle_input(event)
         };
         if !handled {
-            // Only deal with input if screen hasn't captured it
-            match (event.id, event.press_type) {
-                (ButtonId::Y, ButtonPress::Short) => {
-                    self.update_screen(self.next_kind(self.current_screen_kind));
+            if let Some(button) = event.as_button() {
+                match (button.id, button.press_type) {
+                    (ButtonId::Y, ButtonPress::Short) => {
+                        self.update_screen(self.next_kind(self.current_screen_kind));
+                    }
+                    (ButtonId::B, ButtonPress::Short) => {
+                        self.update_screen(self.previous_kind(self.current_screen_kind));
+                    }
+                    _ => {}
                 }
-                (ButtonId::B, ButtonPress::Short) => {
-                    self.update_screen(self.previous_kind(self.current_screen_kind));
+            } else if let Some(key) = event.as_key() {
+                match key {
+                    KeyboardInput::Right | KeyboardInput::Tab => {
+                        self.update_screen(self.next_kind(self.current_screen_kind));
+                    }
+                    KeyboardInput::Left | KeyboardInput::BackTab => {
+                        self.update_screen(self.previous_kind(self.current_screen_kind));
+                    }
+                    _ => {}
                 }
-                // Ignore other press types
-                _ => (),
             }
         }
         handled
@@ -168,6 +178,19 @@ impl ScreenFlow {
             _ => Color::Yellow,
         };
         let network_status_color = match ctx.system.network_status.connectivity {
+            _ if matches!(ctx.system.wifi_mode_status, WifiModeStatus::HotspotActive) => {
+                Color::Cyan
+            }
+            _ if matches!(ctx.system.wifi_mode_status, WifiModeStatus::HotspotStarting) => {
+                Color::Yellow
+            }
+            _ if matches!(ctx.system.wifi_mode_status, WifiModeStatus::ClientConnecting) => {
+                Color::Yellow
+            }
+            _ if matches!(ctx.system.wifi_mode_status, WifiModeStatus::Recovering) => {
+                Color::Yellow
+            }
+            _ if matches!(ctx.system.wifi_mode_status, WifiModeStatus::Fault(_)) => Color::Red,
             Connectivity::Full if ctx.system.network_status.resolving => Color::Green,
             Connectivity::Full => Color::Blue,
             Connectivity::None => Color::Red,

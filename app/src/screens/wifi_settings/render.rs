@@ -26,7 +26,7 @@ impl WiFiSettingsScreen {
             .split(area);
 
         self.render_instructions(frame, chunks[0]);
-        self.render_help_text(frame, chunks[1]);
+        self.render_help_text(ac, frame, chunks[1]);
         self.render_ssid_input(frame, chunks[2]);
 
         let password_area_chunks = Layout::default()
@@ -55,10 +55,13 @@ impl WiFiSettingsScreen {
         frame.render_widget(instruction, area);
     }
 
-    fn render_help_text(&self, frame: &mut Frame, area: Rect) {
+    fn render_help_text(&self, ac: AppContext, frame: &mut Frame, area: Rect) {
+        let mode_label = format!("Mode: {}", ac.system.wifi_mode_status.label());
+
         let widget = match self.focus {
             Focus::Fields => {
                 let lines = vec![
+                    Line::from(mode_label.clone()).alignment(Alignment::Center),
                     Line::from("A/X: Change Field").alignment(Alignment::Center),
                     Line::from("A (double): Activate/Toggle").alignment(Alignment::Center),
                 ];
@@ -66,6 +69,7 @@ impl WiFiSettingsScreen {
             }
             Focus::Keyboard => {
                 let lines = vec![
+                    Line::from(mode_label.clone()).alignment(Alignment::Center),
                     Line::from("A/B/X/Y: Move Cursor").alignment(Alignment::Center),
                     Line::from("A (double): Type | B (double): Backspace")
                         .alignment(Alignment::Center),
@@ -74,7 +78,7 @@ impl WiFiSettingsScreen {
             }
             Focus::ConnectingPopup => {
                 let lines = vec![
-                    Line::from("").alignment(Alignment::Center),
+                    Line::from(mode_label).alignment(Alignment::Center),
                     Line::from("Press any button to dismiss.").alignment(Alignment::Center),
                 ];
                 Paragraph::new(lines).alignment(Alignment::Center)

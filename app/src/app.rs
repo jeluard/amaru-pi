@@ -3,9 +3,12 @@ use crate::frame::FrameState;
 use crate::modal::Modal;
 use crate::network_status::NetworkStatusCache;
 use crate::screen_flow::ScreenFlow;
-use crate::screens::{AppContext, ScreenAction, SystemState, WifiConnectionStatus};
+use crate::screens::{
+    AppContext, ScreenAction, SystemState, WifiConnectionStatus, WifiModeStatus,
+};
 use crate::systemd::ServiceInfo;
 use crate::update::{UpdateManager, UpdateStatus};
+use crate::wifi::WifiOperatingMode;
 use ratatui::prelude::*;
 use std::time::{Duration, Instant};
 use tokio::sync::mpsc;
@@ -18,6 +21,7 @@ pub enum AppEvent {
 #[derive(Debug, PartialEq, Eq)]
 pub enum AppAction {
     CheckNetworkStatus,
+    CheckWifiModeStatus,
     CheckAmaruStatus,
     ConnectToWifi(String, String),
     Quit,
@@ -50,6 +54,7 @@ impl Default for App {
             amaru_status: ServiceInfo::default(),
             network_status: connectivity_cache.last_result,
             wifi_connection_status: WifiConnectionStatus::default(),
+            wifi_mode_status: WifiModeStatus::default(),
         };
         let (action_tx, action_rx) = mpsc::channel(100);
         Self {
@@ -87,6 +92,7 @@ impl App {
                 if self.amaru_status_last_check.elapsed() >= self.amaru_status_interval {
                     self.amaru_status_last_check = Instant::now();
                     actions.push(AppAction::CheckNetworkStatus);
+                    actions.push(AppAction::CheckWifiModeStatus);
                     actions.push(AppAction::CheckAmaruStatus);
                 }
 
@@ -120,6 +126,7 @@ impl App {
         let screen_action = self.screen_flow.update(ctx);
         match screen_action {
             ScreenAction::ConnectToWifi(ssid, pw) => {
+                self.note_wifi_connect_requested();
                 actions.push(AppAction::ConnectToWifi(ssid, pw))
             }
             ScreenAction::ResetWifiConnectionStatus => {
@@ -142,5 +149,27 @@ impl App {
 
         // Draw the modal on top, if active
         self.modal.draw(frame);
+    }
+
+    pub fn note_wifi_connect_requested(&mut self) {
+        self.system_state.wifi_mode_status = WifiModeStatus::ClientConnecting;
+    }
+
+    pub(crate) fn sync_wifi_mode_status(&mut self, operating_mode: WifiOperatingMode) {
+        if matches!(
+            self.system_state.wifi_connection_status,
+            WifiConnectionStatus::Connecting
+        ) {
+            self.system_state.wifi_mode_status = WifiModeStatus::ClientConnecting;
+            return;
+        }
+
+        self.system_state.wifi_mode_status = match operating_mode {
+            WifiOperatingMode::Client => WifiModeStatus::ClientOnline,
+            WifiOperatingMode::Hotspot => WifiModeStatus::HotspotActive,
+            WifiOperatingMode::Disconnected | WifiOperatingMode::Unknown => {
+                WifiModeStatus::HotspotStarting
+            }
+        };
     }
 }

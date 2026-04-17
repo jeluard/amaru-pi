@@ -8,6 +8,12 @@ use tracing::debug;
 use tracing::error;
 use tracing::info;
 
+const HOTSPOT_SCRIPT: &str = include_str!("../../../overlays/usr/local/bin/amaru-hotspot.sh");
+const HOTSPOT_SERVICE: &str =
+    include_str!("../../../overlays/etc/systemd/system/amaru-hotspot.service");
+const HOTSPOT_TIMER: &str =
+    include_str!("../../../overlays/etc/systemd/system/amaru-hotspot.timer");
+
 const UPDATER_SCRIPT: &str = r#"#!/bin/bash
 set -euo pipefail
 
@@ -222,7 +228,8 @@ BIN_DIR="/home/pi/bin"
 TRIGGER_FILE="/home/pi/.update_requested"
 LOCK_FILE="/tmp/amaru_update.lock"
 
-declare -a MANAGED_SERVICES=("amaru-pi.service" "amaru.service")
+declare -a STOP_UNITS=("amaru-pi.service" "getty@tty1.service" "amaru.service")
+declare -a START_UNITS=("getty@tty1.service" "amaru.service")
 
 exec 200>"$LOCK_FILE"
 flock -n 200 || { echo "ERROR: Another update is in progress."; exit 1; }
@@ -234,8 +241,8 @@ apply_updates() {
     local new_state_json="$state_json"
 
     # Stop services
-    for service in "${MANAGED_SERVICES[@]}"; do
-        systemctl stop "$service" || true
+    for unit in "${STOP_UNITS[@]}"; do
+        systemctl stop "$unit" || true
     done
 
     for app_name in $(echo "$state_json" | jq -r '.applications | keys[]'); do
@@ -268,8 +275,8 @@ apply_updates() {
     chown pi:pi "$STATE_FILE"
 
     # Start services
-    for service in "${MANAGED_SERVICES[@]}"; do
-        systemctl start "$service" || log "ERROR: Failed to start $service"
+    for unit in "${START_UNITS[@]}"; do
+        systemctl start "$unit" || log "ERROR: Failed to start $unit"
     done
 }
 
@@ -302,14 +309,35 @@ else
 fi
 "#;
 
-fn write_script(path: &str, content: &str) -> io::Result<()> {
+fn write_file(path: &str, content: &str, mode: u32) -> io::Result<()> {
     debug!("Writing to {}", path);
     let p = Path::new(path);
+    if let Some(parent) = p.parent() {
+        fs::create_dir_all(parent)?;
+    }
     fs::write(p, content)?;
     let metadata = fs::metadata(p)?;
     let mut perms = metadata.permissions();
-    perms.set_mode(0o755);
+    perms.set_mode(mode);
     fs::set_permissions(p, perms)?;
+    Ok(())
+}
+
+fn write_script(path: &str, content: &str) -> io::Result<()> {
+    write_file(path, content, 0o755)
+}
+
+fn run_command_checked(program: &str, args: &[&str]) -> anyhow::Result<()> {
+    let status = Command::new(program).args(args).status()?;
+    if !status.success() {
+        return Err(anyhow::anyhow!(
+            "{} {:?} failed with status {}",
+            program,
+            args,
+            status
+        ));
+    }
+
     Ok(())
 }
 
@@ -355,7 +383,22 @@ pub fn run() -> anyhow::Result<()> {
     write_script("/home/pi/scripts/updater.sh", UPDATER_SCRIPT)?;
     write_script("/home/pi/scripts/activate-update.sh", ACTIVATE_SCRIPT)?;
     write_script("/home/pi/scripts/start-amaru.sh", START_AMARU_SCRIPT)?;
+    write_script("/usr/local/bin/amaru-hotspot.sh", HOTSPOT_SCRIPT)?;
+    write_file(
+        "/etc/systemd/system/amaru-hotspot.service",
+        HOTSPOT_SERVICE,
+        0o644,
+    )?;
+    write_file(
+        "/etc/systemd/system/amaru-hotspot.timer",
+        HOTSPOT_TIMER,
+        0o644,
+    )?;
     patch_amaru_service()?;
+
+    run_command_checked("/usr/local/bin/amaru-hotspot.sh", &["ensure"])?;
+    run_command_checked("systemctl", &["daemon-reload"])?;
+    run_command_checked("systemctl", &["enable", "--now", "amaru-hotspot.timer"])?;
 
     Ok(())
 }

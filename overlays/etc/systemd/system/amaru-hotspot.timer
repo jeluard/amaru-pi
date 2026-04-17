@@ -1,0 +1,12 @@
+[Unit]
+Description=Periodically reconcile Amaru fallback hotspot
+
+[Timer]
+OnBootSec=10s
+OnUnitActiveSec=10s
+AccuracySec=1s
+Persistent=true
+Unit=amaru-hotspot.service
+
+[Install]
+WantedBy=timers.target
