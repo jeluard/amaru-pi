@@ -4,3 +4,4 @@
 .build
 overlays/home/pi/bin
 app/app
+.rpi-qemu/
