@@ -48,13 +48,46 @@ disable_service() {
     fi
 }
 
+remove_path() {
+    local path="$1"
+
+    if [[ -e "$path" || -L "$path" ]]; then
+        echo "🧹 Removing $path..."
+        run_cmd rm -f "$path"
+    fi
+}
+
+restore_amaru_service_execstart() {
+    local service_path="/etc/systemd/system/amaru.service"
+
+    if [[ -f "$service_path" ]] && grep -q '/home/pi/scripts/start-amaru.sh' "$service_path"; then
+        echo "↩️ Restoring amaru.service ExecStart..."
+        run_cmd sed -i 's#ExecStart=/home/pi/scripts/start-amaru.sh#ExecStart=/home/pi/bin/amaru daemon#' "$service_path"
+    fi
+}
+
+restore_amaru_service_execstart
 reload_systemd
 enable_service first-boot
 enable_service amaru
 enable_service amaru-hotspot.timer
 enable_service splash
 enable_service getty@tty1.service
-enable_service updater.timer
-enable_service activate-update.path
+disable_service updater.timer
+disable_service updater.service
+disable_service activate-update.path
+disable_service activate-update.service
 disable_service amaru-pi
 disable_service hotspot-nat
+remove_path /etc/systemd/system/updater.service
+remove_path /etc/systemd/system/updater.timer
+remove_path /etc/systemd/system/activate-update.service
+remove_path /etc/systemd/system/activate-update.path
+remove_path /home/pi/bin/updater.sh
+remove_path /home/pi/bin/activate-update.sh
+remove_path /home/pi/scripts/updater.sh
+remove_path /home/pi/scripts/activate-update.sh
+remove_path /home/pi/scripts/start-amaru.sh
+remove_path /home/pi/.amaru_update_state.json
+remove_path /home/pi/.update_requested
+reload_systemd

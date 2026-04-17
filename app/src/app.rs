@@ -1,13 +1,11 @@
 use crate::button::InputEvent;
 use crate::frame::FrameState;
-use crate::modal::Modal;
 use crate::network_status::NetworkStatusCache;
 use crate::screen_flow::ScreenFlow;
 use crate::screens::{
     AppContext, ScreenAction, SystemState, WifiConnectionStatus, WifiModeStatus,
 };
 use crate::systemd::ServiceInfo;
-use crate::update::{UpdateManager, UpdateStatus};
 use crate::wifi::WifiOperatingMode;
 use ratatui::prelude::*;
 use std::time::{Duration, Instant};
@@ -39,8 +37,6 @@ pub struct App {
     amaru_status_last_check: Instant,
     amaru_status_interval: Duration,
     pub system_state: SystemState,
-    modal: Modal,
-    update_manager: UpdateManager,
     pub action_tx: mpsc::Sender<AppActionComplete>,
     action_rx: mpsc::Receiver<AppActionComplete>,
 }
@@ -64,8 +60,6 @@ impl Default for App {
             amaru_status_last_check: now - default_interval,
             amaru_status_interval: default_interval,
             system_state,
-            modal: Modal::default(),
-            update_manager: UpdateManager::new(Duration::from_secs(5)),
             action_tx,
             action_rx,
         }
@@ -95,24 +89,8 @@ impl App {
                     actions.push(AppAction::CheckWifiModeStatus);
                     actions.push(AppAction::CheckAmaruStatus);
                 }
-
-                // Update check if no modal is active
-                if !self.modal.is_active()
-                    && let UpdateStatus::UpdateReadyToNotify(app_names) =
-                        self.update_manager.check_for_update()
-                    && !app_names.is_empty()
-                {
-                    self.modal = Modal::UpdatePopup(app_names);
-                }
             }
             AppEvent::Input(event) => {
-                // If a modal is active, it handles the input
-                if self.modal.handle_input(event, &mut self.update_manager) {
-                    // The modal handled it, don't process further
-                    return Vec::new();
-                }
-
-                // Modal not active or didn't handle, pass to screen flow
                 self.screen_flow.handle_input(event);
             }
         }
@@ -144,11 +122,7 @@ impl App {
             frame: &self.frame_state,
             system: &self.system_state,
         };
-        // Draw the main screen first
         self.screen_flow.display(ctx, frame);
-
-        // Draw the modal on top, if active
-        self.modal.draw(frame);
     }
 
     pub fn note_wifi_connect_requested(&mut self) {

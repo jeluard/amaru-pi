@@ -160,6 +160,15 @@ install_owned_file "${SPLASH_SERVICE_SOURCE}" "${REMOTE_SPLASH_SERVICE}" 0644 ro
 echo "Reloading systemd and starting tty1 runtime"
 ssh_on_pi <<EOF
 set -euo pipefail
+sudo systemctl disable --now updater.timer updater.service activate-update.path activate-update.service || true
+sudo rm -f /etc/systemd/system/updater.service /etc/systemd/system/updater.timer
+sudo rm -f /etc/systemd/system/activate-update.service /etc/systemd/system/activate-update.path
+sudo rm -f '${APP_HOME}/bin/updater.sh' '${APP_HOME}/bin/activate-update.sh'
+sudo rm -f '${APP_HOME}/scripts/updater.sh' '${APP_HOME}/scripts/activate-update.sh' '${APP_HOME}/scripts/start-amaru.sh'
+sudo rm -f '${APP_HOME}/.amaru_update_state.json' '${APP_HOME}/.update_requested'
+if sudo test -f /etc/systemd/system/amaru.service && sudo grep -q '/home/pi/scripts/start-amaru.sh' /etc/systemd/system/amaru.service; then
+  sudo sed -i 's#ExecStart=/home/pi/scripts/start-amaru.sh#ExecStart=/home/pi/bin/amaru daemon#' /etc/systemd/system/amaru.service
+fi
 sudo systemctl daemon-reload
 sudo ${REMOTE_HOTSPOT_SCRIPT} ensure
 sudo systemctl enable amaru-hotspot.timer

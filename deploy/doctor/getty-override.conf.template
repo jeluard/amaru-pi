@@ -1,4 +1,0 @@
-[Service]
-ExecStart=
-ExecStart=-/sbin/agetty --autologin {{PI_USER}} --noclear %I $TERM
-Type=idle

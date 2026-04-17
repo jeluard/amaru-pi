@@ -28,9 +28,18 @@ echo "✅ Upload complete."
 
 echo "🔨 Configuring scripts on Pi..."
 ssh ${SSH_OPTS} "${SSH_REMOTE}" "
+  set -euo pipefail
     find /home/pi/scripts -type f -name '*.sh' -exec chmod +x {} \;
-    
-    ln -sf /home/pi/scripts/updater.sh /home/pi/bin/updater.sh
-    ln -sf /home/pi/scripts/activate-update.sh /home/pi/bin/activate-update.sh
+
+  sudo systemctl disable --now updater.timer updater.service activate-update.path activate-update.service >/dev/null 2>&1 || true
+  rm -f /home/pi/bin/updater.sh /home/pi/bin/activate-update.sh
+  rm -f /home/pi/scripts/updater.sh /home/pi/scripts/activate-update.sh /home/pi/scripts/start-amaru.sh
+  rm -f /home/pi/.amaru_update_state.json /home/pi/.update_requested
+  sudo rm -f /etc/systemd/system/updater.service /etc/systemd/system/updater.timer
+  sudo rm -f /etc/systemd/system/activate-update.service /etc/systemd/system/activate-update.path
+  if sudo test -f /etc/systemd/system/amaru.service && sudo grep -q '/home/pi/scripts/start-amaru.sh' /etc/systemd/system/amaru.service; then
+    sudo sed -i 's#ExecStart=/home/pi/scripts/start-amaru.sh#ExecStart=/home/pi/bin/amaru daemon#' /etc/systemd/system/amaru.service
+  fi
+  sudo systemctl daemon-reload
 "
 echo "✅ Sync finished. Scripts configured."
